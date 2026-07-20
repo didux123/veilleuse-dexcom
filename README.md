@@ -89,3 +89,50 @@ dexcom.js        # Client API Share : auth 3 étapes, gestion de session, parsin
 test-dexcom.js   # Test CLI de l'authentification
 public/index.html# UI (vanilla JS + Chart.js via CDN)
 ```
+
+## Comment ça marche
+
+### Authentification (dexcom.js)
+
+L'API Share s'utilise en 3 étapes, toutes en `POST` JSON sur
+`https://shareous1.dexcom.com/ShareWebServices/Services` (région `ous`) :
+
+1. **`/General/AuthenticatePublisherAccount`** avec `{ accountName, password, applicationId }`
+   → renvoie l'**accountId** (UUID en plaintext, guillemets à retirer). Il est
+   dérivé automatiquement de l'email/mot de passe et ne change jamais pour un
+   compte donné — il est gardé en mémoire pour toute la vie du process.
+2. **`/General/LoginPublisherAccountById`** avec `{ accountId, password, applicationId }`
+   → renvoie le **sessionId** (UUID), gardé en mémoire jusqu'à expiration.
+3. **`/Publisher/ReadPublisherLatestGlucoseValues?sessionId=...&minutes=1440&maxCount=288`**
+   → tableau de mesures `{ WT: "Date(1691455258000)", Value: 85, Trend: "Flat" }`.
+   `WT` est un epoch en millisecondes, `Value` est en mg/dL.
+
+L'`applicationId` (`d89443d2-...`) est une constante publique commune à
+pydexcom/Nightscout, pas un secret.
+
+**Expiration de session** : si l'étape 3 renvoie `SessionIdNotFound` /
+`SessionNotValid`, le client refait un login puis retente **une seule fois**
+(jamais de boucle — des tentatives répétées avec un mauvais mot de passe
+peuvent verrouiller le compte Dexcom).
+
+**Erreurs distinguées** : `DexcomCredentialsError` (identifiants refusés →
+fatal, on arrête de poller) vs erreurs réseau (→ retry avec backoff côté
+serveur).
+
+### Serveur (server.js)
+
+- Poll Dexcom **toutes les 60 s**, résultat dans un cache mémoire.
+- Les endpoints ne servent **que le cache** — aucune requête client ne
+  déclenche d'appel Dexcom (protège des rafales et du rate limit).
+- Échec réseau → backoff exponentiel 60 s → 2 min → … → 5 min max, reset au
+  premier succès. La dernière valeur connue reste servie pendant la panne.
+- `status` calculé à la volée : `ok`, `stale` (> 15 min), `error` (aucune donnée).
+
+### UI (public/index.html)
+
+- Fetch `/api/glucose` toutes les 60 s, graphe via `/api/history` toutes les 5 min,
+  « il y a X min » recalculé côté client toutes les 10 s.
+- Seuils hypo/hyper stockés en `localStorage` (défauts 70/180 mg/dL) ;
+  ils pilotent la couleur de fond et les lignes pointillées du graphe
+  (dessinées par un petit plugin Chart.js inline).
+- Conversion : `mmol/L = mg/dL ÷ 18.0182`.
