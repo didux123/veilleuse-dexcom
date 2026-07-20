@@ -1,0 +1,5 @@
+# Identifiants Dexcom — ne JAMAIS committer
+.env
+.env.local
+
+node_modules/

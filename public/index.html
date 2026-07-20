@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glycémie</title>
+<style>
+  :root {
+    --bg: #10141a;          /* fond neutre (in range) */
+    --bg-low: #4a1015;      /* hypo */
+    --bg-high: #4a2c08;     /* hyper */
+    --fg: #e8ecf1;
+    --fg-dim: #8b94a1;
+    --accent-ok: #3ddc84;
+    --accent-low: #ff5a5f;
+    --accent-high: #ffb020;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 1.5s ease;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  body.range-low  { background: var(--bg-low); }
+  body.range-high { background: var(--bg-high); }
+
+  /* Bandeau stale / erreur */
+  #banner {
+    display: none;
+    width: 100%;
+    max-width: 720px;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  #banner.stale { display: block; background: #5a4a10; color: #ffe08a; }
+  #banner.error { display: block; background: #5a1a1a; color: #ffb3b3; }
+
+  /* Bloc valeur principale */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  #value-row { display: flex; align-items: baseline; gap: 1.5rem; }
+  #mgdl {
+    font-size: clamp(6rem, 22vw, 11rem);
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  #arrow { font-size: clamp(3rem, 10vw, 5rem); font-weight: 700; }
+  body.stale #mgdl, body.stale #arrow { opacity: 0.35; }
+  #mmol { font-size: 1.6rem; color: var(--fg-dim); margin-top: 0.5rem; }
+  #age  { font-size: 1.3rem; color: var(--fg-dim); margin-top: 0.75rem; }
+
+  /* Graphe */
+  #chart-wrap {
+    width: 100%;
+    max-width: 720px;
+    height: 220px;
+    margin-bottom: 1rem;
+  }
+
+  /* Réglages */
+  #settings-btn {
+    position: fixed; top: 1rem; right: 1rem;
+    background: none; border: none; font-size: 1.6rem;
+    cursor: pointer; opacity: 0.5; color: var(--fg);
+  }
+  #settings-btn:hover { opacity: 1; }
+  #settings {
+    display: none;
+    position: fixed; top: 3.5rem; right: 1rem;
+    background: #1c222b; border: 1px solid #333c48; border-radius: 12px;
+    padding: 1rem 1.25rem; z-index: 10;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  #settings.open { display: block; }
+  #settings label { display: block; font-size: 0.9rem; color: var(--fg-dim); margin-top: 0.6rem; }
+  #settings input {
+    width: 5.5rem; margin-top: 0.25rem; padding: 0.35rem 0.5rem;
+    background: #10141a; color: var(--fg);
+    border: 1px solid #333c48; border-radius: 6px; font-size: 1rem;
+  }
+  #settings .hint { font-size: 0.75rem; color: var(--fg-dim); margin-top: 0.75rem; max-width: 12rem; }
+</style>
+</head>
+<body>
+  <button id="settings-btn" title="Réglages des seuils">⚙️</button>
+  <div id="settings">
+    <strong>Seuils (mg/dL)</strong>
+    <label>Hypo (rouge si en dessous)
+      <input type="number" id="input-low" min="40" max="120" step="5">
+    </label>
+    <label>Hyper (orange si au-dessus)
+      <input type="number" id="input-high" min="120" max="400" step="5">
+    </label>
+    <p class="hint">Persisté dans ce navigateur. Ne change pas les alarmes Dexcom.</p>
+  </div>
+
+  <div id="banner"></div>
+
+  <main>
+    <div id="value-row">
+      <span id="mgdl">--</span>
+      <span id="arrow"></span>
+    </div>
+    <div id="mmol">-- mmol/L</div>
+    <div id="age">chargement…</div>
+  </main>
+
+  <div id="chart-wrap"><canvas id="chart"></canvas></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>
+    // ---------- Seuils (persistés en localStorage) ----------
+    const DEFAULTS = { low: 70, high: 180 };
+    let thresholds = { ...DEFAULTS };
+    try {
+      const saved = JSON.parse(localStorage.getItem('glucose-thresholds'));
+      if (saved && saved.low && saved.high) thresholds = saved;
+    } catch { /* localStorage vide ou corrompu : on garde les défauts */ }
+
+    const inputLow = document.getElementById('input-low');
+    const inputHigh = document.getElementById('input-high');
+    inputLow.value = thresholds.low;
+    inputHigh.value = thresholds.high;
+
+    function saveThresholds() {
+      const low = Number(inputLow.value) || DEFAULTS.low;
+      const high = Number(inputHigh.value) || DEFAULTS.high;
+      thresholds = { low, high };
+      localStorage.setItem('glucose-thresholds', JSON.stringify(thresholds));
+      if (lastData) render(lastData); // ré-applique la couleur de fond
+      if (chart) chart.update();      // redessine les lignes de seuil
+    }
+    inputLow.addEventListener('change', saveThresholds);
+    inputHigh.addEventListener('change', saveThresholds);
+
+    const settingsPanel = document.getElementById('settings');
+    document.getElementById('settings-btn').addEventListener('click', () => {
+      settingsPanel.classList.toggle('open');
+    });
+
+    // ---------- Affichage de la valeur courante ----------
+    const elMgdl = document.getElementById('mgdl');
+    const elArrow = document.getElementById('arrow');
+    const elMmol = document.getElementById('mmol');
+    const elAge = document.getElementById('age');
+    const banner = document.getElementById('banner');
+    let lastData = null;
+
+    function render(data) {
+      lastData = data;
+      document.body.classList.remove('range-low', 'range-high', 'stale');
+      banner.className = '';
+      banner.textContent = '';
+
+      if (data.mgdl == null) {
+        // Aucune donnée du tout : on affiche l'erreur mais jamais un écran vide muet
+        elAge.textContent = 'aucune donnée';
+        banner.className = 'error';
+        banner.textContent = '⚠ ' + (data.error || 'Erreur : pas de données Dexcom');
+        return;
+      }
+
+      elMgdl.textContent = data.mgdl;
+      elArrow.textContent = data.trendArrow || '';
+      elMmol.textContent = Number(data.mmol).toFixed(1) + ' mmol/L';
+      elAge.textContent = 'il y a ' + data.ageMinutes + ' min';
+
+      if (data.mgdl < thresholds.low) document.body.classList.add('range-low');
+      else if (data.mgdl > thresholds.high) document.body.classList.add('range-high');
+
+      if (data.status === 'stale') {
+        document.body.classList.add('stale');
+        banner.className = 'stale';
+        banner.textContent = '⏱ Données périmées — dernière mesure il y a ' + data.ageMinutes + ' min';
+      } else if (data.error) {
+        // On a une valeur récente en cache mais le dernier poll a échoué
+        banner.className = 'error';
+        banner.textContent = '⚠ ' + data.error;
+      }
+    }
+
+    async function fetchGlucose() {
+      try {
+        const res = await fetch('/api/glucose');
+        render(await res.json());
+      } catch {
+        // Serveur injoignable : on garde la dernière valeur affichée
+        banner.className = 'error';
+        banner.textContent = '⚠ Serveur injoignable — dernière valeur affichée';
+      }
+    }
+
+    // "il y a X min" recalculé côté client entre deux fetchs
+    setInterval(() => {
+      if (lastData && lastData.timestamp) {
+        const mins = Math.round((Date.now() - new Date(lastData.timestamp)) / 60000);
+        elAge.textContent = 'il y a ' + mins + ' min';
+      }
+    }, 10_000);
+
+    // ---------- Graphe 24 h ----------
+    let chart = null;
+
+    // Plugin inline : dessine les lignes horizontales des seuils
+    const thresholdLines = {
+      id: 'thresholdLines',
+      afterDatasetsDraw(c) {
+        const { ctx, chartArea, scales: { y } } = c;
+        for (const [value, color] of [[thresholds.low, '#ff5a5f'], [thresholds.high, '#ffb020']]) {
+          const yPos = y.getPixelForValue(value);
+          if (yPos < chartArea.top || yPos > chartArea.bottom) continue;
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.setLineDash([6, 6]);
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(chartArea.left, yPos);
+          ctx.lineTo(chartArea.right, yPos);
+          ctx.stroke();
+          ctx.restore();
+        }
+      },
+    };
+
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/api/history?hours=24');
+        const points = await res.json();
+        // Axe X linéaire → timestamps numériques (évite l'adaptateur de dates de Chart.js)
+        const data = points.map((p) => ({ x: new Date(p.timestamp).getTime(), y: p.mgdl }));
+
+        if (!chart) {
+          chart = new Chart(document.getElementById('chart'), {
+            type: 'line',
+            data: { datasets: [{
+              data,
+              borderColor: '#3ddc84',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.25,
+            }] },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: { legend: { display: false }, tooltip: { enabled: true } },
+              scales: {
+                x: {
+                  type: 'linear',
+                  ticks: {
+                    color: '#8b94a1',
+                    maxTicksLimit: 7,
+                    // Axe X en heures locales, sans lib de dates : on stocke des timestamps
+                    callback: (v) => new Date(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                  },
+                  grid: { color: 'rgba(139,148,161,0.1)' },
+                },
+                y: {
+                  min: 40,
+                  suggestedMax: 250,
+                  ticks: { color: '#8b94a1' },
+                  grid: { color: 'rgba(139,148,161,0.1)' },
+                },
+              },
+            },
+            plugins: [thresholdLines],
+          });
+        } else {
+          chart.data.datasets[0].data = data;
+          chart.update();
+        }
+      } catch { /* le graphe garde ses anciennes données */ }
+    }
+
+    // ---------- Boucles de rafraîchissement ----------
+    fetchGlucose();
+    fetchHistory();
+    setInterval(fetchGlucose, 60_000);       // valeur courante : toutes les 60 s
+    setInterval(fetchHistory, 5 * 60_000);   // graphe : toutes les 5 min
+  </script>
+</body>
+</html>
