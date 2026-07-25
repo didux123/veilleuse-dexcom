@@ -4,6 +4,8 @@ Mini web app qui affiche en temps réel la glycémie d'un capteur **Dexcom G7** 
 
 > ⚠️ **Avertissement médical** : cet outil est un affichage de confort. Il peut être en retard, périmé ou en panne. **Les alarmes de l'app Dexcom officielle restent la seule référence médicale.**
 
+> 📄 **Contexte complet du projet** (vision, API Dexcom en détail, projet de veilleuse ESP8266, modélisation 3D du boîtier) : voir **[CONTEXT.md](CONTEXT.md)**.
+
 ## Prérequis côté Dexcom
 
 - Le **partage doit être activé** dans l'app Dexcom G7, avec **au moins un follower** invité (sinon l'API Share ne renvoie rien).
