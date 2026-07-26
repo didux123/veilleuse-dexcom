@@ -10,8 +10,8 @@
 //   vert doux fixe      = dans la plage
 //   orange fixe         = hyper (> HYPER_MGDL)
 //   rouge "respiration" = hypo  (< HYPO_MGDL)
-//   bleu/blanc lent     = données périmées (> STALE_MIN)
-//   bleu/blanc rapide   = erreur réseau / WiFi / Dexcom injoignable
+//   blanc doux fixe     = pas de données fiables (périmées > STALE_MIN,
+//                         WiFi coupé ou Dexcom injoignable)
 //   violet respirant    = mode configuration WiFi : l'ESP émet le réseau
 //                         "Veilleuse-Dexcom" -> s'y connecter au téléphone,
 //                         le portail s'ouvre, choisir son WiFi.
@@ -309,16 +309,10 @@ static void render(DisplayState st) {
       fillAll((uint8_t)(255 * lvl), 0, 0);
       break;
     }
-    case ST_STALE: {                                    // bleu/blanc lent
-      bool on = (t / 1200) % 2;
-      if (on) fillAll(0, 0, 38); else fillAll(22, 22, 22);
+    case ST_STALE:                       // blanc fixe = pas de donnees fiables
+    case ST_ERROR:                       // (donnees perimees ou reseau coupe)
+      fillAll(30, 30, 30);
       break;
-    }
-    case ST_ERROR: {                                    // bleu/blanc rapide
-      bool on = (t / 400) % 2;
-      if (on) fillAll(0, 0, 38); else fillAll(22, 22, 22);
-      break;
-    }
     case ST_FATAL: {                                    // rouge/bleu : reflasher
       bool on = (t / 600) % 2;
       if (on) fillAll(47, 0, 0); else fillAll(0, 0, 47);
@@ -399,8 +393,8 @@ void loop() {
     static const DisplayState demoSeq[] = {ST_OK, ST_HYPER, ST_HYPO,
                                            ST_STALE, ST_ERROR, ST_CONFIG, ST_FATAL};
     static const char* demoNames[] = {"VERT (dans la plage)", "ORANGE (hyper)",
-        "ROUGE PULSE (hypo)", "BLEU/BLANC lent (perime)",
-        "BLEU/BLANC rapide (erreur)", "VIOLET (config WiFi)",
+        "ROUGE PULSE (hypo)", "BLANC (donnees perimees)",
+        "BLANC (erreur reseau)", "VIOLET (config WiFi)",
         "ROUGE/BLEU (identifiants)"};
     int idx = (int)((millis() / 6000) % 7);
     static int lastIdx = -1;

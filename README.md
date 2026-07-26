@@ -33,8 +33,7 @@ et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 | 🟢 Vert doux fixe | Dans la plage (70–180 mg/dL) |
 | 🟠 Orange fixe | Hyperglycémie |
 | 🔴 **Rouge pulsé pleine puissance** | **Hypoglycémie** (ignore le mode nuit) |
-| 🔵⚪ Bleu/blanc lent | Données périmées (> 15 min) |
-| 🔵⚪ Bleu/blanc rapide | Erreur (WiFi ou Dexcom injoignable) |
+| ⚪ Blanc doux fixe | Pas de données fiables (périmées > 15 min, WiFi ou Dexcom injoignable) |
 | 🟣 Violet respirant | Mode configuration WiFi |
 | 🔴🔵 Rouge/bleu alterné | Identifiants Dexcom refusés |
 
