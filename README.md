@@ -1,140 +1,110 @@
-# Moniteur glycémie Dexcom G7
+# 🌙 Veilleuse Dexcom — lampe de glycémie autonome
 
-Mini web app qui affiche en temps réel la glycémie d'un capteur **Dexcom G7** via l'**API Dexcom Share** (non officielle — celle utilisée par pydexcom et Nightscout). Le serveur Node.js fait proxy : il poll Dexcom toutes les 60 s, met le résultat en cache, et le sert à la page web ainsi qu'à un endpoint JSON minimaliste destiné à un **ESP8266** (projet lampe d'alerte à venir).
+Une veilleuse imprimée en 3D qui affiche en continu la glycémie d'un capteur
+**Dexcom G7** par un simple code couleur. Un coup d'œil suffit, même de loin
+et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 
-> ⚠️ **Avertissement médical** : cet outil est un affichage de confort. Il peut être en retard, périmé ou en panne. **Les alarmes de l'app Dexcom officielle restent la seule référence médicale.**
+> ⚠️ **Avertissement médical** : c'est un outil de **confort** uniquement.
+> Les alarmes de l'application Dexcom officielle restent la seule référence
+> médicale. Cette lampe peut afficher un état « périmé » ou « erreur »
+> (panne WiFi, API indisponible…) et ne remplace aucun dispositif d'alerte.
 
-> 📄 **Contexte complet du projet** (vision, API Dexcom en détail, projet de veilleuse ESP8266, modélisation 3D du boîtier) : voir **[CONTEXT.md](CONTEXT.md)**.
+> 📄 Genèse et décisions de conception : voir [CONTEXT.md](CONTEXT.md).
 
-## Prérequis côté Dexcom
+## Le projet en deux parties
 
-- Le **partage doit être activé** dans l'app Dexcom G7, avec **au moins un follower** invité (sinon l'API Share ne renvoie rien).
-- On utilise les identifiants du **compte qui publie** les données (le compte de l'app G7 sur le téléphone), **pas** ceux d'un follower.
-- L'API Share est **non officielle et non documentée** : Dexcom peut la modifier ou la couper sans préavis.
+| Partie | Dossier | Rôle |
+|---|---|---|
+| **Veilleuse ESP8266** | [`firmware/`](firmware/) | La lampe : autonome, parle directement à l'API Dexcom Share en HTTPS, pilote un anneau de LED adressables. Aucun serveur requis. |
+| **Boîtier 3D** | [`hardware/`](hardware/) | STL prêts à imprimer + scripts Fusion 360 paramétriques (berceau à clips pour la carte, diffuseur à baïonnette). |
+| **Dashboard web** (bonus) | racine | Petit serveur Node/Express qui affiche la glycémie et son historique 24 h dans le navigateur. Indépendant de la lampe. |
 
-## Installation
+## La veilleuse
+
+![La veilleuse terminée](docs/photo.jpg)
+
+### Code couleur
+
+| Lumière | Signification |
+|---|---|
+| 🟢 Vert doux fixe | Dans la plage (70–180 mg/dL) |
+| 🟠 Orange fixe | Hyperglycémie |
+| 🔴 **Rouge pulsé pleine puissance** | **Hypoglycémie** (ignore le mode nuit) |
+| 🔵⚪ Bleu/blanc lent | Données périmées (> 15 min) |
+| 🔵⚪ Bleu/blanc rapide | Erreur (WiFi ou Dexcom injoignable) |
+| 🟣 Violet respirant | Mode configuration WiFi |
+| 🔴🔵 Rouge/bleu alterné | Identifiants Dexcom refusés |
+
+Jamais de « faux vert » : si la lampe ne sait pas, elle le montre.
+
+### Fonctionnalités
+
+- **Autonome** : l'ESP8266 fait l'authentification Dexcom Share (3 étapes),
+  le poll toutes les 60 s, et gère sa session proprement (un seul retry,
+  jamais de martèlement de l'API).
+- **Portail captif WiFi** : sans réseau connu, la lampe émet `Veilleuse-Dexcom`
+  → on configure le WiFi depuis un téléphone. **Multi-réseaux** : chaque
+  réseau rejoint est mémorisé (jusqu'à 10), la lampe est nomade.
+- **Mode nuit** : luminosité réduite de 22 h à 7 h (heure de Paris,
+  été/hiver automatique) — la couleur reste lisible sans éclairer la
+  chambre. L'alarme hypo reste à pleine puissance.
+- **Mise à jour OTA** : reflashage par WiFi (`veilleuse.local`), avec barre
+  de progression sur l'anneau LED.
+- Backoff exponentiel sur erreur réseau, détection de fraîcheur par NTP.
+
+### Matériel (~10 €)
+
+- Wemos **D1 mini** (ESP8266)
+- Ruban LED adressable **SK6812 / WS2812B** 5 V, 60 LED/m — 12 LED
+- Chargeur USB 5 V ≥ 1 A + câble
+- Boîtier : 2 pièces imprimées en 3D ([`hardware/`](hardware/))
+
+Câblage : `5V→5V`, `GND→G`, `DIN→D1` (GPIO5). Détails dans
+[`firmware/README.md`](firmware/README.md).
+
+### Démarrage rapide
+
+```bash
+cd firmware
+cp include/secrets.h.example include/secrets.h   # remplir ses identifiants
+pio run -t upload                                # premier flash par USB
+pio run -e d1_mini_ota -t upload                 # les suivants par WiFi
+```
+
+## Le dashboard web (optionnel)
+
+Serveur Node ≥ 18 (fetch natif), Express, zéro framework front. Le serveur
+fait proxy : il poll Dexcom toutes les 60 s avec cache mémoire et backoff —
+les endpoints ne tapent jamais Dexcom en direct, et les identifiants ne
+transitent jamais côté client.
 
 ```bash
 npm install
-cp .env.example .env
-# puis remplir .env avec tes identifiants
+cp .env.example .env      # DEXCOM_USERNAME / DEXCOM_PASSWORD / DEXCOM_REGION=ous
+node test-dexcom.js       # valider l'auth d'abord (sans risque de lock)
+npm start                 # http://localhost:3000
 ```
 
-Nécessite **Node.js ≥ 18** (fetch natif).
+- `GET /api/glucose` → `{ mgdl, mmol, trend, trendArrow, timestamp, ageMinutes, status }`
+- UI sombre : valeur géante, graphe 24 h (Chart.js), seuils réglables
+  (localStorage), états « stale » et « erreur » explicites.
 
-### Configuration `.env`
+## Prérequis côté Dexcom
 
-| Variable | Description |
-|---|---|
-| `DEXCOM_USERNAME` | Username, email ou téléphone (`+33...`) du compte qui publie |
-| `DEXCOM_PASSWORD` | Mot de passe de ce compte |
-| `DEXCOM_REGION` | `ous` (Europe / hors US) ou `us` |
-| `PORT` | Port du serveur (défaut `3000`) |
+- Le **partage doit être activé** dans l'app Dexcom G7, avec **au moins un
+  follower** invité (sinon l'API Share ne renvoie rien).
+- Utiliser les identifiants du **compte qui publie** (l'app G7), pas d'un
+  follower.
 
-Le fichier `.env` est dans `.gitignore` — les identifiants ne quittent jamais le serveur et ne transitent **jamais** côté client.
+## Notes sur l'API Dexcom Share
 
-## Lancement
+API non officielle (celle des apps Dexcom, documentée par les communautés
+[pydexcom](https://github.com/gagebenne/pydexcom) et
+[Nightscout](https://github.com/nightscout) — merci à elles). Dexcom peut la
+modifier sans préavis. Points d'implémentation : région Europe `shareous1`,
+session en RAM, **un seul retry** sur session expirée et jamais de boucle
+d'authentification (risque de blocage du compte).
 
-1. **Valider l'authentification** d'abord :
+## Licence
 
-   ```bash
-   node test-dexcom.js
-   ```
-
-   Le script fait les 3 étapes d'auth et affiche la dernière glycémie. En cas d'identifiants invalides, il l'indique clairement sans réessayer (pour éviter un verrouillage du compte Dexcom).
-
-2. **Démarrer le serveur** :
-
-   ```bash
-   npm start
-   ```
-
-   Puis ouvrir <http://localhost:3000>.
-
-## Endpoints
-
-| Endpoint | Description |
-|---|---|
-| `GET /` | Page web (valeur en gros, graphe 24 h, seuils réglables) |
-| `GET /api/glucose` | JSON plat pour l'ESP8266 (voir ci-dessous) |
-| `GET /api/history?hours=24` | Historique pour le graphe (1–24 h) |
-
-### `GET /api/glucose` — format ESP8266
-
-```json
-{
-  "mgdl": 85,
-  "mmol": 4.7,
-  "trend": "Flat",
-  "trendArrow": "→",
-  "timestamp": "2026-07-20T14:32:18.000Z",
-  "ageMinutes": 3,
-  "status": "ok"
-}
-```
-
-- `status` : `ok` | `stale` (dernière mesure > 15 min) | `error` (aucune donnée).
-- Sans authentification pour l'instant (usage réseau local uniquement — ne pas exposer sur Internet).
-- Les endpoints servent un **cache** : aucune requête client ne déclenche d'appel Dexcom.
-
-## Comportement en cas de problème
-
-- **Identifiants invalides** : message clair au démarrage, le serveur reste en ligne mais arrête de poller (pas de crash loop, pas de risque de lock du compte).
-- **API Dexcom injoignable** : retry avec backoff exponentiel (60 s → 5 min max), l'UI affiche l'erreur en bandeau.
-- **Pas de données récentes** (warmup du capteur, téléphone hors de portée…) : la dernière valeur connue reste affichée, grisée, avec un bandeau « données périmées ». Jamais d'écran vide.
-
-## Structure
-
-```
-server.js        # Express : endpoints, cache, polling 60 s + backoff
-dexcom.js        # Client API Share : auth 3 étapes, gestion de session, parsing
-test-dexcom.js   # Test CLI de l'authentification
-public/index.html# UI (vanilla JS + Chart.js via CDN)
-```
-
-## Comment ça marche
-
-### Authentification (dexcom.js)
-
-L'API Share s'utilise en 3 étapes, toutes en `POST` JSON sur
-`https://shareous1.dexcom.com/ShareWebServices/Services` (région `ous`) :
-
-1. **`/General/AuthenticatePublisherAccount`** avec `{ accountName, password, applicationId }`
-   → renvoie l'**accountId** (UUID en plaintext, guillemets à retirer). Il est
-   dérivé automatiquement de l'email/mot de passe et ne change jamais pour un
-   compte donné — il est gardé en mémoire pour toute la vie du process.
-2. **`/General/LoginPublisherAccountById`** avec `{ accountId, password, applicationId }`
-   → renvoie le **sessionId** (UUID), gardé en mémoire jusqu'à expiration.
-3. **`/Publisher/ReadPublisherLatestGlucoseValues?sessionId=...&minutes=1440&maxCount=288`**
-   → tableau de mesures `{ WT: "Date(1691455258000)", Value: 85, Trend: "Flat" }`.
-   `WT` est un epoch en millisecondes, `Value` est en mg/dL.
-
-L'`applicationId` (`d89443d2-...`) est une constante publique commune à
-pydexcom/Nightscout, pas un secret.
-
-**Expiration de session** : si l'étape 3 renvoie `SessionIdNotFound` /
-`SessionNotValid`, le client refait un login puis retente **une seule fois**
-(jamais de boucle — des tentatives répétées avec un mauvais mot de passe
-peuvent verrouiller le compte Dexcom).
-
-**Erreurs distinguées** : `DexcomCredentialsError` (identifiants refusés →
-fatal, on arrête de poller) vs erreurs réseau (→ retry avec backoff côté
-serveur).
-
-### Serveur (server.js)
-
-- Poll Dexcom **toutes les 60 s**, résultat dans un cache mémoire.
-- Les endpoints ne servent **que le cache** — aucune requête client ne
-  déclenche d'appel Dexcom (protège des rafales et du rate limit).
-- Échec réseau → backoff exponentiel 60 s → 2 min → … → 5 min max, reset au
-  premier succès. La dernière valeur connue reste servie pendant la panne.
-- `status` calculé à la volée : `ok`, `stale` (> 15 min), `error` (aucune donnée).
-
-### UI (public/index.html)
-
-- Fetch `/api/glucose` toutes les 60 s, graphe via `/api/history` toutes les 5 min,
-  « il y a X min » recalculé côté client toutes les 10 s.
-- Seuils hypo/hyper stockés en `localStorage` (défauts 70/180 mg/dL) ;
-  ils pilotent la couleur de fond et les lignes pointillées du graphe
-  (dessinées par un petit plugin Chart.js inline).
-- Conversion : `mmol/L = mg/dL ÷ 18.0182`.
+[MIT](LICENSE). Fait avec ❤️ et un peu de pancréas artificiel.
