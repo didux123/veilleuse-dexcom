@@ -102,7 +102,7 @@ Non documentée, peut changer sans préavis.
 ## 3. PARTIE 1 — Serveur web (terminé)
 
 **Stack** : Node.js ≥ 18 (fetch natif), Express, dotenv. Zéro framework front.
-Sur GitHub privé : `didux123/DEXCOM_API`.
+Sur GitHub : `didux123/veilleuse-dexcom`.
 
 ### Fichiers
 
@@ -297,6 +297,6 @@ Deux pièces imprimées :
 ## 6. Environnement de dev
 
 - **Repo local** : `/Users/mdemonteynard/Documents/CODE/PERSO/DEXCOM_API`
-- **Remote** : `github.com/didux123/DEXCOM_API` (privé)
+- **Remote** : `github.com/didux123/veilleuse-dexcom`
 - Serveur Node testé et fonctionnel avec de vraies données.
 - Firmware ESP : **pas encore commencé** (discussion / conception uniquement).
