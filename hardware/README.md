@@ -4,6 +4,9 @@ Boîtier en deux pièces imprimées 3D pour la veilleuse ESP8266 + WS2812.
 Modélisé via l'API Python de Fusion 360 (scripts dans `fusion_scripts/`,
 exécutés en live par le serveur MCP Fusion, port 27182).
 
+🖨️ Aussi publié sur **MakerWorld** avec profil d'impression Bambu Lab :
+[makerworld.com/en/models/3097564-veilleuse-dexcom](https://makerworld.com/en/models/3097564-veilleuse-dexcom#profileId-3491186)
+
 ## Fichiers
 
 | Fichier | Contenu |

@@ -11,6 +11,9 @@ et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 
 > 📄 Genèse et décisions de conception : voir [CONTEXT.md](CONTEXT.md).
 
+🖨️ **Le boîtier est sur MakerWorld** (profil d'impression prêt pour Bambu Lab) :
+[makerworld.com/en/models/3097564-veilleuse-dexcom](https://makerworld.com/en/models/3097564-veilleuse-dexcom#profileId-3491186)
+
 ## Le projet en deux parties
 
 | Partie | Dossier | Rôle |
