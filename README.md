@@ -16,11 +16,11 @@ et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 
 ## Le projet en deux parties
 
-| Partie | Dossier | Rôle |
+| Partie | Où | Rôle |
 |---|---|---|
 | **Veilleuse ESP8266** | [`firmware/`](firmware/) | La lampe : autonome, parle directement à l'API Dexcom Share en HTTPS, pilote un anneau de LED adressables. Aucun serveur requis. |
 | **Boîtier 3D** | [`hardware/`](hardware/) | STL prêts à imprimer + scripts Fusion 360 paramétriques (berceau à clips pour la carte, diffuseur à baïonnette). |
-| **Dashboard web** (bonus) | racine | Petit serveur Node/Express qui affiche la glycémie et son historique 24 h dans le navigateur. Indépendant de la lampe. |
+| **Dashboard web** (bonus) | branche [`web-dashboard`](https://github.com/didux123/veilleuse-dexcom/tree/web-dashboard) | Petit serveur Node/Express qui affiche la glycémie et son historique 24 h dans le navigateur. Indépendant de la lampe. |
 
 ## La veilleuse
 
@@ -76,21 +76,10 @@ pio run -e d1_mini_ota -t upload                 # les suivants par WiFi
 
 ## Le dashboard web (optionnel)
 
-Serveur Node ≥ 18 (fetch natif), Express, zéro framework front. Le serveur
-fait proxy : il poll Dexcom toutes les 60 s avec cache mémoire et backoff —
-les endpoints ne tapent jamais Dexcom en direct, et les identifiants ne
-transitent jamais côté client.
-
-```bash
-npm install
-cp .env.example .env      # DEXCOM_USERNAME / DEXCOM_PASSWORD / DEXCOM_REGION=ous
-node test-dexcom.js       # valider l'auth d'abord (sans risque de lock)
-npm start                 # http://localhost:3000
-```
-
-- `GET /api/glucose` → `{ mgdl, mmol, trend, trendArrow, timestamp, ageMinutes, status }`
-- UI sombre : valeur géante, graphe 24 h (Chart.js), seuils réglables
-  (localStorage), états « stale » et « erreur » explicites.
+Un petit serveur Node/Express avec UI (valeur géante, graphe 24 h, seuils
+réglables) vit sur la branche
+[**`web-dashboard`**](https://github.com/didux123/veilleuse-dexcom/tree/web-dashboard)
+avec sa propre documentation. Totalement indépendant de la lampe.
 
 ## Prérequis côté Dexcom
 
