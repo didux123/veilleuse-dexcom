@@ -9,6 +9,8 @@
 // Codes couleur :
 //   vert doux fixe      = dans la plage
 //   orange fixe         = hyper (> HYPER_MGDL)
+//   gyrophare orange    = hyper severe (> HYPER2_MGDL) : rotation, pas plus
+//                         de lumiere, juste du mouvement
 //   rouge "respiration" = hypo  (< HYPO_MGDL)
 //   blanc doux fixe     = pas de données fiables (périmées > STALE_MIN,
 //                         WiFi coupé ou Dexcom injoignable)
@@ -57,6 +59,7 @@
 
 #define HYPO_MGDL      70
 #define HYPER_MGDL     180
+#define HYPER2_MGDL    300     // hyper severe : gyrophare orange
 #define STALE_MIN      15      // données plus vieilles -> "stale"
 
 #define POLL_BASE_MS   60000UL   // 60 s
@@ -68,7 +71,7 @@ static const char* DEX_APP_ID = "d89443d2-327c-4a6f-89e5-496bbb0317db"; // publi
 static const char* DEX_UA = "Dexcom Share/3.0.2.11 CFNetwork/711.2.23 Darwin/14.0.0";
 
 // ------------------- État -------------------
-enum DisplayState { ST_BOOT, ST_CONFIG, ST_OK, ST_HYPER, ST_HYPO, ST_STALE, ST_ERROR, ST_FATAL };
+enum DisplayState { ST_BOOT, ST_CONFIG, ST_OK, ST_HYPER, ST_HYPER2, ST_HYPO, ST_STALE, ST_ERROR, ST_FATAL };
 
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 WiFiManager wm;
@@ -281,8 +284,9 @@ static DisplayState currentState() {
   time_t now = time(nullptr);
   bool timeOk = now > 1600000000;        // NTP synchronise
   if (timeOk && wtEpoch > 0 && (now - wtEpoch) > STALE_MIN * 60) return ST_STALE;
-  if (mgdl < HYPO_MGDL)  return ST_HYPO;
-  if (mgdl > HYPER_MGDL) return ST_HYPER;
+  if (mgdl < HYPO_MGDL)   return ST_HYPO;
+  if (mgdl > HYPER2_MGDL) return ST_HYPER2;
+  if (mgdl > HYPER_MGDL)  return ST_HYPER;
   return ST_OK;
 }
 
@@ -303,6 +307,16 @@ static void render(DisplayState st) {
     }
     case ST_OK:    fillAll(0, 36, 5); break;            // vert doux
     case ST_HYPER: fillAll(66, 18, 0); break;           // orange
+    case ST_HYPER2: {                    // gyrophare : bloc de 6 LED qui tourne
+      int head = (int)((t / 125) % NUM_LEDS);           // 1 tour / 1,5 s
+      strip.clear();
+      for (int j = 0; j < 6; j++) {
+        int i = (head + j) % NUM_LEDS;
+        strip.setPixelColor(i, (uint8_t)(140 * gDim), (uint8_t)(38 * gDim), 0);
+      }
+      strip.show();
+      break;
+    }
     case ST_HYPO: {                       // ALARME : pulsation rouge pleine
       float phase = (t % 1200) / 1200.0f; // puissance, rapide, 0 -> 255
       float lvl = 0.5f * (1.0f - cosf(phase * 2.0f * PI));   // 0..1
@@ -390,13 +404,13 @@ void loop() {
   if (millis() - lastFrame >= 33) {
     lastFrame = millis();
 #if DEMO_MODE
-    static const DisplayState demoSeq[] = {ST_OK, ST_HYPER, ST_HYPO,
+    static const DisplayState demoSeq[] = {ST_OK, ST_HYPER, ST_HYPER2, ST_HYPO,
                                            ST_STALE, ST_ERROR, ST_CONFIG, ST_FATAL};
     static const char* demoNames[] = {"VERT (dans la plage)", "ORANGE (hyper)",
-        "ROUGE PULSE (hypo)", "BLANC (donnees perimees)",
-        "BLANC (erreur reseau)", "VIOLET (config WiFi)",
-        "ROUGE/BLEU (identifiants)"};
-    int idx = (int)((millis() / 6000) % 7);
+        "GYROPHARE ORANGE (hyper severe)", "ROUGE PULSE (hypo)",
+        "BLANC (donnees perimees)", "BLANC (erreur reseau)",
+        "VIOLET (config WiFi)", "ROUGE/BLEU (identifiants)"};
+    int idx = (int)((millis() / 6000) % 8);
     static int lastIdx = -1;
     if (idx != lastIdx) { lastIdx = idx; Serial.printf("[demo] %s\n", demoNames[idx]); }
     render(demoSeq[idx]);

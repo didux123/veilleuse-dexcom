@@ -31,7 +31,8 @@ et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 | Lumière | Signification |
 |---|---|
 | 🟢 Vert doux fixe | Dans la plage (70–180 mg/dL) |
-| 🟠 Orange fixe | Hyperglycémie |
+| 🟠 Orange fixe | Hyperglycémie (> 180 mg/dL) |
+| 🟠🔄 Gyrophare orange | Hyper sévère (> 300 mg/dL) : 6 LED tournantes — du mouvement, pas plus de lumière |
 | 🔴 **Rouge pulsé pleine puissance** | **Hypoglycémie** (ignore le mode nuit) |
 | ⚪ Blanc doux fixe | Pas de données fiables (périmées > 15 min, WiFi ou Dexcom injoignable) |
 | 🟣 Violet respirant | Mode configuration WiFi |
