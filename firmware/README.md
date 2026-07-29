@@ -1,7 +1,8 @@
 # Firmware veilleuse — ESP8266 (Wemos D1 mini)
 
 PlatformIO, framework Arduino. Tout le comportement est dans
-[`src/main.cpp`](src/main.cpp), réglages en tête de fichier.
+[`src/main.cpp`](src/main.cpp) ; l'interface de configuration est la page
+[`web/veilleuse-config.html`](web/veilleuse-config.html).
 
 ## Câblage
 
@@ -20,76 +21,110 @@ Ruban SK6812/WS2812B          Wemos D1 mini
 
 ## Configuration : rien à compiler
 
-**En production, aucun identifiant n'est compilé dans le binaire.** Au premier
-démarrage (ou si le WiFi est inconnu), la lampe émet le réseau
-`Veilleuse-XXXX` (LEDs violettes) — on s'y connecte depuis un téléphone et le
-portail s'ouvre. Un seul formulaire regroupe :
+**Aucun identifiant n'est compilé dans le binaire.** Au premier démarrage (ou
+si le WiFi est inconnu), la lampe émet le réseau **ouvert** `Veilleuse-XXXX` :
+on s'y connecte depuis un téléphone et **la page s'ouvre toute seule**, comme
+un portail WiFi d'hôtel. Un seul formulaire regroupe :
 
 | Champ | Rôle |
 |---|---|
 | Réseau WiFi + mot de passe | Connexion (jusqu'à 10 réseaux mémorisés) |
 | Email + mot de passe Dexcom | Compte **publieur** (app G7, partage actif) |
-| Compte US | Coché = `share2.dexcom.com`, sinon Europe `shareous1` |
-| Seuils hypo / hyper / gyrophare | mg/dL (50-90 / 120-250 / 200-400) |
-| Nuit : début, fin, luminosité | Heures locales et % (5-100) |
+| Région | Europe (`shareous1`) ou US (`share2`) |
+| Seuils hypo / hyper / gyrophare | mg/dL, validés `40 ≤ hypo < hyper < gyrophare ≤ 400` |
+| Mode nuit : début, fin, luminosité | Horaires **HH:MM** et % (5-100) |
+| Mises à jour automatiques | Activables / désactivables |
 
-Les champs Dexcom laissés vides ne modifient pas les identifiants existants
-(pratique pour ne changer que le WiFi ou les seuils). Tout est persisté dans
-`/config.cfg` en flash.
+Les champs de mot de passe laissés vides ne modifient rien (pratique pour ne
+changer qu'un seuil). Tout est persisté dans `/config.cfg` en flash.
+
+**La même page reste accessible en permanence** sur le réseau local à
+`http://veilleuse-xxxxxx.local/` : c'est là qu'on revient pour modifier les
+réglages. L'adresse est affichée à la fin du parcours d'installation.
 
 Pour le développement, `include/secrets.h` (copié depuis `secrets.h.example`)
-permet de pré-remplir WiFi et compte Dexcom afin d'éviter le portail à chaque
-flash. La config du portail est toujours prioritaire sur `secrets.h`.
+permet de pré-remplir WiFi et compte Dexcom. La config du portail est toujours
+prioritaire sur `secrets.h`.
 
 ## Identité unique
 
 Chaque lampe dérive son identité de sa puce (`ESP.getChipId()`) : hostname
-mDNS/OTA `veilleuse-xxxxxx` et SSID de portail `Veilleuse-XXXX`. Plusieurs
-lampes cohabitent donc sans collision. Le hostname s'affiche en série au boot :
+mDNS/OTA `veilleuse-xxxxxx`, SSID de portail `Veilleuse-XXXX`. Plusieurs lampes
+cohabitent sans collision. Visible dans `GET /api/diag` ou en série au boot :
 
 ```
-[id] chipid 5FB874 | hostname veilleuse-5fb874 | AP Veilleuse-B874 | fw 1.1.0
+[id] chipid 5FB874 | hostname veilleuse-5fb874 | AP Veilleuse-B874 | fw 1.2.0
 ```
+
+## Endpoints HTTP
+
+| Endpoint | Rôle |
+|---|---|
+| `GET /` | La page (gzip depuis PROGMEM, ~6 Ko) |
+| `GET /api/status` | `state`, `label`, `mgdl`, `trend`, `age`, `fw`, `host` |
+| `GET /api/config` | Réglages courants — **jamais de mot de passe** |
+| `GET /api/scan` | Réseaux vus (cache ; relance un scan en fond) |
+| `POST /api/save` | Enregistre (x-www-form-urlencoded) puis redémarre |
+| `GET /api/diag` | Heap, uptime, `lps`, WiFi, état — diagnostic |
+| `GET /api/log` | Les ~1000 derniers caractères du journal |
+| `GET /api/portal?on=1` | Force l'ouverture du portail (test sans couper le WiFi) |
+
+`state` ∈ `ok|hi|hs|lo|un|su|bo|er`, calqué sur les états LED.
+Les sondes de détection captive (`/generate_204`, `/hotspot-detect.html`,
+`/ncsi.txt`…) renvoient un 302 vers l'IP du point d'accès quand le portail est
+ouvert : c'est ce qui déclenche l'ouverture automatique de la page.
 
 ## Flasher
 
 ```bash
-pio run -t upload                                                    # USB
-pio run -e d1_mini_ota -t upload --upload-port veilleuse-xxxxxx.local  # WiFi
+pio run -t upload                                                      # USB
+pio run -e d1_mini_ota -t upload --upload-port veilleuse-xxxxxx.local    # WiFi
 ```
 
-Le port série est auto-détecté ; l'OTA accepte aussi une adresse IP (utile si
-le mDNS traîne). Pendant un flash, l'anneau affiche une barre bleue.
+Le port série est auto-détecté ; l'OTA accepte aussi une adresse IP. Pendant un
+flash, l'anneau affiche une barre bleue. **Une fenêtre OTA de 3 s est garantie à
+chaque démarrage**, avant l'initialisation du serveur web : si un firmware
+défectueux est publié, il reste ce créneau pour reflasher sans démonter la lampe.
+
+## La page web
+
+`web/veilleuse-config.html` est la source éditable (17 Ko). Avant chaque
+compilation, `tools/gen_web.py` (pre-script PlatformIO) la gzippe et génère
+`include/web_page.h` (~6 Ko en PROGMEM, non versionné). Éditer la page suffit,
+le build s'occupe du reste.
+
+Pour itérer sur le design sans flasher : servir la page depuis un petit serveur
+local qui renvoie des JSON figés sur les 4 endpoints.
 
 ## Mises à jour automatiques
 
-Chaque lampe vérifie les [GitHub Releases](https://github.com/didux123/veilleuse-dexcom/releases)
-du projet et s'installe la version publiée toute seule :
+Chaque lampe consulte les [GitHub Releases](https://github.com/didux123/veilleuse-dexcom/releases)
+du projet et s'installe la nouvelle version toute seule :
 
 - **Quand** : après le premier relevé réussi au démarrage, puis chaque nuit
   vers 4 h (la minute dépend du chipid, ce qui étale les téléchargements).
-- **Quoi** : compare `FW_VERSION` du firmware au fichier `version.txt` de la
-  release `latest`. Comparaison par **inégalité** — republier une version
-  antérieure fait donc redescendre le parc (rollback volontaire possible).
-- **Garde-fous** : jamais pendant une hypo, jamais si quelqu'un est connecté
-  au portail, pas si la RAM libre est trop basse, et une version qui échoue
-  est retentée au maximum 3 fois avant d'être abandonnée (suivi dans
-  `/update.txt`) — un incident réseau passager ne bloque donc pas la lampe,
-  mais un binaire durablement mauvais ne boucle pas non plus.
+- **Quoi** : n'installe que des versions **strictement plus récentes**
+  (comparaison sémantique `X.Y.Z`). ⚠️ Une simple inégalité serait tentante
+  pour permettre les retours en arrière, mais elle **rétrograde** toute lampe
+  portant un firmware plus récent que la release publiée — mesuré en vrai :
+  une lampe en 1.2.0 s'est réinstallé la 1.1.0 publiée, perdant son serveur
+  web. Pour revenir en arrière, **republier l'ancien code sous un numéro plus
+  haut**.
+- **Garde-fous** : désactivable depuis la page ; jamais pendant une hypo ou un
+  gyrophare ; jamais si quelqu'un consulte la page (moins de 60 s) ou est
+  connecté au portail ; pas si la RAM libre est insuffisante ; une version qui
+  échoue est retentée 3 fois au maximum (suivi dans `/update.txt`).
 
-Chaque lampe publie sa version en mDNS : `dns-sd -L veilleuse-xxxxxx
-_arduino._tcp local` affiche `fw=1.1.0`. Pratique pour vérifier l'état d'un
-parc sans rien débrancher.
+Chaque lampe publie aussi sa version en mDNS :
+`dns-sd -L veilleuse-xxxxxx _arduino._tcp local` affiche `fw=1.2.0`.
 
-⚙️ Détail utile si vous touchez à ce code : `objects.githubusercontent.com`
-n'annonce pas de `max_fragment_length` et envoie des enregistrements TLS
-pleine taille. Le téléchargement du binaire renvoie **zéro octet** avec un
-buffer de réception de 1 ou 4 Ko — il faut **16 Ko** (`TLS_RX_BULK`).
-`version.txt`, lui, se contente de 4 Ko.
+⚙️ Détail à connaître : `objects.githubusercontent.com` n'annonce pas de
+`max_fragment_length` et envoie des enregistrements TLS pleine taille. Le
+téléchargement du binaire renvoie **zéro octet** avec un buffer de réception de
+1 ou 4 Ko — il faut **16 Ko** (`TLS_RX_BULK`). `version.txt` se contente de 4 Ko.
 
 ⚠️ L'ESP8266 n'a pas de partition de secours : un firmware qui ne démarre pas
-oblige à un reflash USB de chaque lampe. D'où l'étape canari du script de
-release.
+oblige à un reflash de chaque lampe. D'où l'étape canari du script de release.
 
 ## Publier une version
 
@@ -103,8 +138,7 @@ lampe** (canari) puis publie la release. Incrémenter `FW_VERSION` dans
 `main.cpp` avant de le lancer.
 
 Pour tester la chaîne d'auto-update sans exposer le parc : publier une
-**prerelease** (`gh release create v0.0.0-test firmware.bin version.txt
---prerelease`, invisible de `latest`) et flasher une lampe de test avec
+**prerelease** (invisible de `latest`) et flasher une lampe de test avec
 l'environnement `d1_mini_testupd`.
 
 ## Fichiers en flash (LittleFS)
@@ -112,8 +146,11 @@ l'environnement `d1_mini_testupd`.
 | Fichier | Contenu |
 |---|---|
 | `/wifis.txt` | Réseaux connus, `ssid<TAB>motdepasse`, plus récent en tête |
-| `/config.cfg` | Identifiants Dexcom, région et réglages (`clé=valeur`) |
-| `/update.txt` | Dernière version tentée et nombre d'essais (anti-boucle) |
+| `/config.cfg` | `ver=2`, identifiants, région, seuils, mode nuit (minutes), `ota` |
+| `/update.txt` | Dernière version tentée + nombre d'essais (anti-boucle) |
+
+Le format v1 (horaires de nuit en heures entières) est migré automatiquement
+vers v2 (minutes) au premier démarrage.
 
 ## États lumineux
 
@@ -122,11 +159,11 @@ Voir le [README principal](../README.md#code-couleur). Logique dans
 hypo à pleine puissance même en mode nuit. `DEMO_MODE 1` en tête de
 `main.cpp` fait défiler tous les états (6 s chacun) sans appeler Dexcom.
 
-Cas particulier — **violet/rouge alterné** : identifiants Dexcom refusés ou
-absents. La lampe ouvre alors son portail pour permettre la correction sans
-reflash. Aucune requête n'est renvoyée à Dexcom tant que de nouveaux
-identifiants n'ont pas été enregistrés : une action humaine = un essai
-(protège le compte Dexcom d'un verrouillage).
+**Violet/rouge alterné** : identifiants Dexcom refusés ou absents. La lampe
+ouvre son portail pour permettre la correction sans reflash, et n'envoie plus
+aucune requête à Dexcom tant que de nouveaux identifiants n'ont pas été
+enregistrés : une action humaine = un essai (protège le compte d'un
+verrouillage).
 
 ## Anti-verrouillage Dexcom
 
@@ -135,3 +172,15 @@ garde `accountId` et la session en RAM, re-login **une seule fois** sur session
 expirée, backoff exponentiel 60 s → 5 min sur erreur réseau, et arrêt complet
 des requêtes sur identifiants refusés. Ne pas « améliorer » ça avec des
 retries agressifs.
+
+## Ordonnancement (à ne pas casser)
+
+`server.handleClient()` et `dns.processNextRequest()` sont **en tête de
+`loop()`**. Les opérations bloquantes restantes sont encadrées de garde-fous :
+requête TLS Dexcom (2-6 s, différée si quelqu'un consulte la page ou si un scan
+tourne), `wifiMulti.run()` (≤ 8 s, jamais si un client est sur le portail),
+téléchargement d'une mise à jour (30-60 s, serveur et AP fermés le temps du
+flash). Le scan WiFi est **asynchrone** — un scan synchrone appelle
+`esp_suspend()` et figerait la boucle, donc les LED et le serveur web.
+`GET /api/diag` expose `lps` (itérations de `loop()` par seconde, ~12 000 en
+régime normal) : une chute signale un gel.

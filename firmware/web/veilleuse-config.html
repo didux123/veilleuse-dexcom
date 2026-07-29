@@ -1,0 +1,252 @@
+<!DOCTYPE html><html lang="fr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Veilleuse</title>
+<style>
+:root{
+--ok:#45E07F;--hi:#FFA23A;--hs:#FF6B1F;--lo:#FF1F33;--un:#F4F1EA;--su:#B96BFF;--bo:#4C8CFF;
+--b9:#0B0C10;--b8:#14161D;--b7:#1F232D;--ln:#2A2F3B;--st:#07080B;
+--i1:#EDEAE3;--i2:#B9BFCC;--i3:#6F7788;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+--r:16px;--rl:22px;--c:var(--su)
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--b9);color:var(--i1);font:16px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+body{padding:18px 16px calc(34px + env(safe-area-inset-bottom));max-width:460px;margin:0 auto}
+h1{font-size:26px;font-weight:800;letter-spacing:-.025em;line-height:1.1;margin:0}
+h2{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:22px 0 12px}
+p{margin:0;color:var(--i2)}
+small,.m{font-family:var(--mono);font-size:11.5px;color:var(--i3);letter-spacing:.06em}
+a{color:var(--hi);text-decoration:none;border-bottom:2px solid rgba(255,162,58,.35)}
+a:hover{color:var(--ok)}
+.k{display:grid;gap:12px}
+.card,.row,input,.seg,.net{background:var(--b8);border:3px solid var(--ln);border-radius:var(--r)}
+.card{padding:14px;display:flex;align-items:center;gap:12px}
+.dot{width:14px;height:14px;border-radius:99px;background:var(--c);flex:none;box-shadow:0 0 12px 3px color-mix(in oklab,var(--c) 45%,transparent)}
+.gr{flex:1;display:grid;gap:2px}
+.gr b{font-size:14px}
+.val{font-family:var(--mono);font-size:20px;font-weight:700}
+label{display:grid;gap:7px;font-size:14px;font-weight:600}
+input{width:100%;font:16px/1 var(--sans);color:var(--i1);padding:15px 14px;min-height:54px;outline:0;-webkit-appearance:none}
+input[type=password]{font-family:var(--mono);letter-spacing:.18em}
+input:focus{border-color:var(--hi);box-shadow:0 0 0 4px rgba(255,162,58,.18)}
+.pw{display:flex;align-items:center;background:var(--b8);border:3px solid var(--ln);border-radius:var(--r);padding-right:6px}
+.pw input{background:0;border:0;box-shadow:none}
+.pw:focus-within{border-color:var(--hi)}
+button{font:inherit;cursor:pointer;border:0;border-radius:var(--r);color:var(--st)}
+.eye{font-family:var(--mono);font-size:11px;background:var(--i2);padding:12px;min-height:42px;border-radius:11px}
+.b1{width:100%;min-height:58px;background:var(--ok);color:#05240F;font-size:17px;font-weight:800;box-shadow:0 14px 30px -14px rgba(69,224,127,.85)}
+.b1:active{transform:translateY(1px)}
+.b2{width:100%;min-height:52px;background:0;border:3px solid var(--ln);color:var(--i2);font-size:15px}
+.b1[data-c=su]{background:var(--su);color:#16021F;box-shadow:0 14px 30px -14px rgba(185,107,255,.9)}
+.row{display:flex;align-items:center;gap:10px;padding:7px 7px 7px 14px}
+.row b{flex:1;font-size:15px}
+.row .val{min-width:2.6em;text-align:center}
+.st{width:46px;height:46px;border-radius:13px;background:var(--b7);color:var(--i1);font-size:22px;line-height:1}
+.st.p{background:var(--c);font-weight:700;color:var(--st)}
+.row.lo{border-color:var(--lo);--c:var(--lo)}
+.row.hi{--c:var(--hi)}
+.row.hs{--c:var(--hs)}
+.seg{display:flex;gap:6px;border-radius:99px;padding:5px}
+.seg button{flex:1;min-height:46px;border-radius:99px;background:0;color:var(--i2);font-size:15px;font-weight:600}
+.seg button[aria-pressed=true]{background:var(--hi);color:#201203;font-weight:700}
+.net{display:flex;align-items:center;gap:12px;padding:14px;min-height:56px;width:100%;text-align:left;color:var(--i1);font-size:15px;border-radius:var(--r)}
+.net[aria-pressed=true]{border-color:var(--ok)}
+.net span{flex:1;font-weight:600}
+.bars{display:flex;align-items:flex-end;gap:3px;height:18px;flex:none}
+.bars i{width:5px;border-radius:2px;background:var(--ln)}
+.bars i:nth-child(1){height:5px}.bars i:nth-child(2){height:9px}.bars i:nth-child(3){height:14px}.bars i:nth-child(4){height:18px}
+.bars.n1 i:nth-child(1),.bars.n2 i:nth-child(-n+2),.bars.n3 i:nth-child(-n+3),.bars.n4 i{background:var(--i2)}
+.net[aria-pressed=true] .bars i{background:var(--ok)}
+.time{display:flex;align-items:center;gap:8px}
+.time input{width:auto;flex:none;font-family:var(--mono);font-size:19px;font-weight:700;padding:12px 10px;text-align:center}
+.time hr{flex:1;height:4px;border:0;border-radius:99px;background:linear-gradient(90deg,var(--su),var(--ln))}
+.rg{-webkit-appearance:none;appearance:none;width:100%;height:12px;padding:0;min-height:0;border-radius:99px;background:var(--b8);border:3px solid var(--ln)}
+.rg::-webkit-slider-thumb{-webkit-appearance:none;width:32px;height:32px;border-radius:99px;background:var(--i1);border:3px solid var(--st)}
+.rg::-moz-range-thumb{width:26px;height:26px;border-radius:99px;background:var(--i1);border:3px solid var(--st)}
+.hd{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.hd span{font-family:var(--mono);color:var(--hi)}
+.ck{display:flex;align-items:center;gap:14px;padding:14px;cursor:pointer}
+.ck input{-webkit-appearance:none;appearance:none;width:54px;height:32px;min-height:0;flex:none;padding:0;border-radius:99px;background:var(--b9);border:3px solid var(--ln);position:relative;transition:background .2s}
+.ck input::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:99px;background:var(--i2);transition:transform .2s,background .2s}
+.ck input:checked{background:var(--ok);border-color:var(--ok)}
+.ck input:checked::after{transform:translateX(22px);background:#05240F}
+.adr{display:grid;gap:8px;padding:14px;border-color:var(--hi);align-items:start}
+.adr code{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--hi);word-break:break-all}
+.why{font-size:13px;font-style:italic;color:var(--i3);line-height:1.5;margin:2px 0 0}
+.tt{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:428px;margin:0 auto;display:flex;align-items:center;gap:12px;background:var(--b7);border:3px solid var(--ok);border-radius:18px;padding:14px;font-size:14px;font-weight:600;animation:tin .5s cubic-bezier(.34,1.56,.64,1) both}
+.tt i{width:22px;height:22px;border-radius:99px;background:var(--ok);color:#05240F;display:grid;place-items:center;font-size:13px;font-weight:800;font-style:normal;flex:none}
+.tt.e{border-color:var(--lo)}.tt.e i{background:var(--lo);color:#14000A}
+[hidden]{display:none!important}
+.ct{text-align:center;display:grid;gap:8px;padding:0 4px}
+svg{display:block;overflow:visible;margin:0 auto}
+#lt{fill:var(--c)}
+#hl,#sh{fill:var(--c)}
+#rot,#bd{display:none;fill:var(--c)}
+[data-s=un]{--c:var(--un)}[data-s=ok]{--c:var(--ok)}[data-s=hi]{--c:var(--hi)}
+[data-s=hs]{--c:var(--hs)}[data-s=lo]{--c:var(--lo)}[data-s=su]{--c:var(--su)}[data-s=bo]{--c:var(--bo)}
+[data-s=su] #lt,[data-s=su] #hl,[data-s=su] #sh{animation:br 3s ease-in-out infinite}
+[data-s=lo] #lt,[data-s=lo] #sh{animation:hp 1.2s ease-in-out infinite}
+[data-s=lo] #hl{animation:hh 1.2s ease-in-out infinite;transform-origin:100px 92px}
+[data-s=hs] #lt{opacity:.3}
+[data-s=hs] #rot{display:block;animation:sp 1.6s linear infinite;transform-origin:100px 100px}
+[data-s=bo] #lt{opacity:.14}
+[data-s=bo] #bd{display:block;animation:sp 2.4s linear infinite;transform-origin:100px 100px}
+[data-s=er] #lt,[data-s=er] #hl{animation:sw .6s steps(1,end) infinite}
+@keyframes br{0%,100%{opacity:.1}50%{opacity:1}}
+@keyframes hp{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+@keyframes hh{0%{opacity:.05;transform:scale(.86)}40%{opacity:.5;transform:scale(1.12)}100%{opacity:.05;transform:scale(.86)}}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes sw{0%,49%{fill:var(--su)}50%,100%{fill:var(--lo)}}
+@keyframes tin{0%{opacity:0;transform:translateY(14px) scale(.96)}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important}[data-s=lo] #lt{opacity:1}}
+</style></head>
+<body>
+
+<div id="lamp" data-s="su">
+<svg viewBox="0 0 200 190" width="150" role="img" aria-label="État de la veilleuse">
+<ellipse id="sh" cx="100" cy="166" rx="60" ry="12" opacity=".28" style="filter:blur(7px)"/>
+<circle id="hl" cx="100" cy="92" r="72" opacity=".22" style="filter:blur(18px)"/>
+<path d="M44 112V138C44 154 62 160 100 160S156 154 156 138V112Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"/>
+<path id="dm" d="M44 112V92C44 56 156 56 156 92v20Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"/>
+<clipPath id="cl"><path d="M44 112V92C44 56 156 56 156 92v20Z"/></clipPath>
+<g clip-path="url(#cl)">
+<rect id="lt" x="40" y="52" width="120" height="64" opacity=".92"/>
+<path id="rot" d="M100 100V34A66 66 0 0 1 158 68Z"/>
+<circle id="bd" cx="100" cy="46" r="15"/>
+</g>
+<path d="M44 112V92C44 56 156 56 156 92v20Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"/>
+<path d="M46 112h108" stroke="#07080B" stroke-width="5" stroke-linecap="round"/>
+</svg>
+</div>
+
+<!-- 1 · accueil (portail captif) -->
+<section id="s1" class="k">
+<div class="ct">
+<h1>Bonsoir.<br>On la met en route ?</h1>
+<p>La veilleuse respire en violet : elle attend ses réglages. Trois minutes, une main.</p>
+</div>
+<button class="b1" data-c="su" onclick="go(2)">Commencer</button>
+</section>
+
+<!-- 2 · wifi -->
+<section id="s2" class="k" hidden>
+<div class="card"><i class="dot"></i><div class="gr"><b id="stTx">En attente de configuration</b><small id="stSub">portail captif</small></div><small id="fw">fw —</small></div>
+<h2>Choisis ton réseau</h2>
+<div id="nets" class="k"><p class="m">scan…</p></div>
+<label>Mot de passe du réseau
+<span class="pw"><input id="wpw" type="password" autocomplete="off" placeholder="••••••••"><button type="button" class="eye" onclick="eye('wpw',this)">VOIR</button></span></label>
+<button class="b1" onclick="go(3)">Continuer</button>
+<button class="b2" onclick="scan()">Rescanner</button>
+</section>
+
+<!-- 3 · compte dexcom -->
+<section id="s3" class="k" hidden>
+<h2 style="margin-top:4px">Compte publieur</h2>
+<p style="font-size:14px">Les identifiants Dexcom Share du porteur. Ils restent dans la veilleuse.</p>
+<label>Email<input id="dem" type="email" inputmode="email" autocapitalize="off" autocomplete="username" placeholder="prenom@exemple.fr"></label>
+<label>Mot de passe
+<span class="pw"><input id="dpw" type="password" autocomplete="current-password"><button type="button" class="eye" onclick="eye('dpw',this)">VOIR</button></span></label>
+<label>Région du compte
+<span class="seg"><button type="button" id="rEU" aria-pressed="true" onclick="reg('eu')">Europe</button><button type="button" id="rUS" aria-pressed="false" onclick="reg('us')">US</button></span></label>
+<div class="card" style="border-color:var(--su)"><i class="dot" style="--c:var(--su)"></i><p style="font-size:13.5px;color:#E4DCEA">Si la lampe clignote violet/rouge, les identifiants sont refusés.</p></div>
+<button class="b1" onclick="go(4)">Continuer</button>
+<button class="b2" onclick="go(2)">Retour</button>
+</section>
+
+<!-- 4 · seuils + nuit -->
+<section id="s4" class="k" hidden>
+<h2 style="margin-top:4px">Seuils (mg/dL)</h2>
+<div class="row lo"><b>Hypo</b><button type="button" class="st" onclick="pm('tLo',-5)">−</button><span class="val" id="tLo">70</span><button type="button" class="st p" onclick="pm('tLo',5)">+</button></div>
+<div class="row hi"><b>Hyper</b><button type="button" class="st" onclick="pm('tHi',-5)">−</button><span class="val" id="tHi">180</span><button type="button" class="st p" onclick="pm('tHi',5)">+</button></div>
+<div class="row hs"><b>Gyrophare</b><button type="button" class="st" onclick="pm('tHs',10)">−</button><span class="val" id="tHs">300</span><button type="button" class="st p" onclick="pm('tHs',10)">+</button></div>
+<h2>Mode nuit</h2>
+<div class="time"><input id="nOn" type="time" value="22:00"><hr><input id="nOff" type="time" value="07:00"></div>
+<label><span class="hd">Luminosité réduite <span id="dimV">22 %</span></span><input id="dim" class="rg" type="range" min="5" max="100" step="1" value="22" oninput="dimV.textContent=this.value+' %'"></label>
+<p class="why">L'hypo ignore le mode nuit : à 22 % elle ne réveillerait personne.</p>
+<h2>Maintenance</h2>
+<label class="ck card"><input id="ota" type="checkbox" checked><span class="gr"><b>Mises à jour automatiques</b><small>installées la nuit, jamais pendant une alerte</small></span></label>
+<div class="card adr">
+<b style="font-size:14px">Note bien cette adresse</b>
+<p style="font-size:13.5px">Cette page de réglages reste accessible à <code id="aHost">http://veilleuse-xxxxxx.local/</code> depuis n'importe quel appareil connecté au <b>même réseau WiFi</b>. Le portail de configuration, lui, disparaît après l'enregistrement.</p>
+</div>
+<button class="b1" onclick="save()">Enregistrer et redémarrer</button>
+<button class="b2" onclick="go(3)">Retour</button>
+</section>
+
+<!-- 5 · confirmation -->
+<section id="s5" class="k" hidden>
+<div class="ct"><h1>Elle veille.</h1><p id="okTx">Prochaine lecture dans 60 s.</p></div>
+<div class="card" style="display:grid;gap:6px;font-family:var(--mono);font-size:12px;color:var(--i3);line-height:1.9">
+<div class="hd"><span style="font-weight:400">adresse</span><span style="color:var(--i1)" id="oHost">veilleuse.local</span></div>
+<div class="hd"><span style="font-weight:400">seuils</span><span style="color:var(--i1)" id="oTh">70 / 180 / 300</span></div>
+<div class="hd"><span style="font-weight:400">nuit</span><span style="color:var(--i1)" id="oNi">22:00 → 07:00 · 22 %</span></div>
+</div>
+<button class="b2" onclick="go(4)">Modifier les réglages</button>
+</section>
+
+<div id="tt" class="tt" hidden><i>✓</i><span id="ttx"></span></div>
+
+<script>
+var S={ssid:'',region:'eu',step:1},L=document.getElementById('lamp'),D=document.getElementById('dimV');
+function $(i){return document.getElementById(i)}
+function go(n){for(var i=1;i<6;i++)$('s'+i).hidden=i!=n;S.step=n;scrollTo(0,0);if(n==2&&!S.scanned)scan()}
+function eye(i,b){var e=$(i);e.type=e.type=='password'?'text':'password';b.textContent=e.type=='password'?'VOIR':'CACHER'}
+function ap(e,v){e.setAttribute('aria-pressed',v?'true':'false')}
+function reg(r){S.region=r;ap($('rEU'),r=='eu');ap($('rUS'),r=='us')}
+function pm(i,d){var e=$(i),v=+e.textContent+d;if(v>=40&&v<=400)e.textContent=v}
+function toast(m,err){var t=$('tt');t.hidden=0;t.className='tt'+(err?' e':'');$('ttx').textContent=m;clearTimeout(S.tk);S.tk=setTimeout(function(){t.hidden=1},3500)}
+function lamp(s){L.dataset.s=s}
+function j(u,o){return fetch(u,o).then(function(r){if(!r.ok)throw 0;return r.json()})}
+function bars(q){return q>-60?4:q>-70?3:q>-80?2:1}
+function scan(){
+ $('nets').innerHTML='<p class="m">scan…</p>';
+ j('/api/scan').then(function(d){
+  var w=$('nets');w.innerHTML='';
+  if(!d.networks.length){w.innerHTML='<p class="m">aucun réseau trouvé</p>';return}
+  d.networks.slice(0,8).forEach(function(n){
+   var b=document.createElement('button');
+   b.type='button';b.className='net';b.setAttribute('aria-pressed',n.ssid==S.ssid?'true':'false');
+   b.innerHTML='<span class="bars n'+bars(n.rssi)+'"><i></i><i></i><i></i><i></i></span><span></span>';
+   b.lastChild.textContent=n.ssid;   // textContent : un SSID avec ' " ou < passe intact
+   b.onclick=function(){pick(b,n.ssid)};
+   w.appendChild(b)})
+ }).catch(function(){$('nets').innerHTML='<p class="m">scan indisponible</p>'})
+}
+function pick(b,s){S.ssid=s;var n=document.querySelectorAll('.net');for(var i=0;i<n.length;i++)ap(n[i],n[i]==b)}
+function status(){
+ j('/api/status').then(function(d){
+  lamp(d.state);$('fw').textContent='fw '+d.fw;$('oHost').textContent=d.host;
+  $('aHost').textContent='http://'+d.host+'/';
+  $('stTx').textContent=d.label;
+  $('stSub').textContent=d.mgdl?d.mgdl+' mg/dL '+(d.trend||'')+' · il y a '+d.age+' s':'aucune donnée';
+  if(d.state=='er')toast('Identifiants Dexcom refusés',1)
+ }).catch(function(){})
+}
+function load(){
+ j('/api/config').then(function(c){
+  S.ssid=c.ssid||'';reg(c.region||'eu');$('dem').value=c.email||'';
+  $('tLo').textContent=c.lo;$('tHi').textContent=c.hi;$('tHs').textContent=c.sev;
+  $('nOn').value=c.nightOn;$('nOff').value=c.nightOff;$('dim').value=c.dim;D.textContent=c.dim+' %';
+  $('ota').checked=c.ota!==false;
+  if(c.host)$('aHost').textContent='http://'+c.host+'/';
+  if(c.configured)go(4)
+ }).catch(function(){})
+}
+function save(){
+ var b=new URLSearchParams({ssid:S.ssid,wpw:$('wpw').value,email:$('dem').value,dpw:$('dpw').value,
+ region:S.region,lo:$('tLo').textContent,hi:$('tHi').textContent,sev:$('tHs').textContent,
+ nightOn:$('nOn').value,nightOff:$('nOff').value,dim:$('dim').value,ota:$('ota').checked?1:0});
+ lamp('bo');
+ fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b})
+ .then(function(r){if(!r.ok)throw 0;
+  $('oTh').textContent=$('tLo').textContent+' / '+$('tHi').textContent+' / '+$('tHs').textContent;
+  $('oNi').textContent=$('nOn').value+' → '+$('nOff').value+' · '+$('dim').value+' %';
+  toast('Réglages enregistrés — redémarrage');go(5);setTimeout(status,6000)})
+ .catch(function(){lamp('er');toast('Échec de l\'enregistrement',1)})
+}
+load();status();setInterval(status,15000);
+</script>
+</body></html>

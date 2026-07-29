@@ -8,3 +8,6 @@ node_modules/
 firmware/.pio/
 firmware/include/secrets.h
 .DS_Store
+
+# page web generee depuis firmware/web/veilleuse-config.html
+firmware/include/web_page.h

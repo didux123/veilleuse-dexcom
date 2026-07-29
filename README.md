@@ -45,19 +45,24 @@ Jamais de « faux vert » : si la lampe ne sait pas, elle le montre.
 - **Autonome** : l'ESP8266 fait l'authentification Dexcom Share (3 étapes),
   le poll toutes les 60 s, et gère sa session proprement (un seul retry,
   jamais de martèlement de l'API).
-- **Zéro configuration à compiler** : au premier branchement la lampe émet son
-  propre réseau `Veilleuse-XXXX` → depuis un téléphone on saisit le WiFi, le
-  compte Dexcom (Europe ou US) **et les réglages** (seuils, mode nuit). Tout
-  est mémorisé dans la lampe.
+- **Installation en trois minutes, sans rien compiler** : au premier branchement
+  la lampe émet son propre réseau `Veilleuse-XXXX` ; on s'y connecte depuis un
+  téléphone et **la page de configuration s'ouvre toute seule** (comme un
+  portail WiFi d'hôtel). On y saisit le WiFi, le compte Dexcom (Europe ou US)
+  et les réglages. Tout est mémorisé dans la lampe.
+- **Réglages accessibles à tout moment** : la même page reste servie sur le
+  réseau local à `http://veilleuse-xxxxxx.local/` — seuils, mode nuit, mises à
+  jour automatiques, sans rien réinstaller.
 - **Multi-réseaux** : chaque WiFi rejoint est mémorisé (jusqu'à 10), la lampe
   est nomade et se reconnecte au meilleur réseau connu.
 - **Mode nuit** : luminosité réduite la nuit (plage et intensité réglables,
   heure de Paris avec été/hiver automatique) — la couleur reste lisible sans
   éclairer la chambre. L'alarme hypo reste à pleine puissance.
-- **Mises à jour automatiques** : chaque lampe vérifie les GitHub Releases du
-  projet et s'installe la nouvelle version toute seule, la nuit, avec barre de
-  progression sur l'anneau (voir [firmware/README.md](firmware/README.md)).
-  Un reflashage OTA manuel depuis le poste de dev reste possible.
+- **Mises à jour automatiques** (désactivables) : chaque lampe vérifie les
+  GitHub Releases du projet et s'installe la nouvelle version toute seule, la
+  nuit, avec barre de progression sur l'anneau — jamais pendant une alerte
+  (voir [firmware/README.md](firmware/README.md)). Un reflashage OTA manuel
+  depuis le poste de dev reste possible.
 - **Identité unique par lampe** (dérivée de la puce) : plusieurs veilleuses
   cohabitent sur le même réseau sans collision.
 - Backoff exponentiel sur erreur réseau, détection de fraîcheur par NTP,
@@ -81,9 +86,11 @@ cp include/secrets.h.example include/secrets.h   # peut rester vide !
 pio run -t upload                                # flash par USB
 ```
 
-Au premier démarrage, se connecter au réseau `Veilleuse-XXXX` émis par la
-lampe (LEDs violettes) et remplir le formulaire : WiFi, compte Dexcom,
-seuils. Ensuite elle se débrouille seule, mises à jour comprises.
+Au premier démarrage, se connecter au réseau `Veilleuse-XXXX` émis par la lampe
+(LEDs violettes) : la page de configuration s'ouvre d'elle-même. Remplir WiFi,
+compte Dexcom et seuils, puis noter l'adresse affichée à la fin — c'est là qu'on
+revient pour les réglages. Ensuite elle se débrouille seule, mises à jour
+comprises.
 
 ## Le dashboard web (optionnel)
 
