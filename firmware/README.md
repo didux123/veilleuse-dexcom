@@ -72,8 +72,20 @@ du projet et s'installe la version publiée toute seule :
   release `latest`. Comparaison par **inégalité** — republier une version
   antérieure fait donc redescendre le parc (rollback volontaire possible).
 - **Garde-fous** : jamais pendant une hypo, jamais si quelqu'un est connecté
-  au portail, pas si la RAM libre est trop basse, et une version dont le flash
-  a échoué n'est **jamais** retentée (mémorisée dans `/update.txt`).
+  au portail, pas si la RAM libre est trop basse, et une version qui échoue
+  est retentée au maximum 3 fois avant d'être abandonnée (suivi dans
+  `/update.txt`) — un incident réseau passager ne bloque donc pas la lampe,
+  mais un binaire durablement mauvais ne boucle pas non plus.
+
+Chaque lampe publie sa version en mDNS : `dns-sd -L veilleuse-xxxxxx
+_arduino._tcp local` affiche `fw=1.1.0`. Pratique pour vérifier l'état d'un
+parc sans rien débrancher.
+
+⚙️ Détail utile si vous touchez à ce code : `objects.githubusercontent.com`
+n'annonce pas de `max_fragment_length` et envoie des enregistrements TLS
+pleine taille. Le téléchargement du binaire renvoie **zéro octet** avec un
+buffer de réception de 1 ou 4 Ko — il faut **16 Ko** (`TLS_RX_BULK`).
+`version.txt`, lui, se contente de 4 Ko.
 
 ⚠️ L'ESP8266 n'a pas de partition de secours : un firmware qui ne démarre pas
 oblige à un reflash USB de chaque lampe. D'où l'étape canari du script de
@@ -101,7 +113,7 @@ l'environnement `d1_mini_testupd`.
 |---|---|
 | `/wifis.txt` | Réseaux connus, `ssid<TAB>motdepasse`, plus récent en tête |
 | `/config.cfg` | Identifiants Dexcom, région et réglages (`clé=valeur`) |
-| `/update.txt` | Dernière version de mise à jour tentée (anti-boucle) |
+| `/update.txt` | Dernière version tentée et nombre d'essais (anti-boucle) |
 
 ## États lumineux
 
