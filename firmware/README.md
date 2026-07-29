@@ -127,6 +127,21 @@ téléchargement du binaire renvoie **zéro octet** avec un buffer de réception
 oblige à un reflash de chaque lampe. D'où l'étape canari du script de release.
 
 ## Publier une version
+### ⚠️ Les binaires publiés ne doivent contenir aucun identifiant
+
+`include/secrets.h` est compilé **dans** le firmware. Un `firmware.bin` publié
+sur un dépôt public est téléchargeable par tout le monde et `strings` suffit à
+en extraire l'email, le mot de passe Dexcom et les identifiants WiFi.
+
+`scripts/release.sh` met donc le `secrets.h` du poste de dev de côté, compile
+avec des valeurs vides, **vérifie que le binaire ne contient aucune de vos
+valeurs** (sinon il refuse de publier) et le restaure ensuite. Ne jamais
+publier un binaire compilé à la main sans cette vérification :
+
+```bash
+strings firmware/.pio/build/d1_mini/firmware.bin | grep -i votre-email
+```
+
 
 ```bash
 ./scripts/release.sh

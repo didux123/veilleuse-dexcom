@@ -205,7 +205,12 @@ function scan(){
  $('nets').innerHTML='<p class="m">scan…</p>';
  j('/api/scan').then(function(d){
   var w=$('nets');w.innerHTML='';
-  if(!d.networks.length){w.innerHTML='<p class="m">aucun réseau trouvé</p>';return}
+  if(!d.networks.length){
+   // Le firmware repond immediatement et lance le scan en fond : on retente
+   // une fois avant d'annoncer qu'il n'y a rien.
+   if(!S.rescan){S.rescan=1;w.innerHTML='<p class="m">scan…</p>';setTimeout(scan,2500);return}
+   w.innerHTML='<p class="m">aucun réseau trouvé</p>';return}
+  S.rescan=0;
   d.networks.slice(0,8).forEach(function(n){
    var b=document.createElement('button');
    b.type='button';b.className='net';b.setAttribute('aria-pressed',n.ssid==S.ssid?'true':'false');

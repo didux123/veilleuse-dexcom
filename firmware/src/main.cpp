@@ -58,7 +58,7 @@
 
 // ------------------- Version / mise a jour -------------------
 // FW_VERSION est la source de verite, lue par scripts/release.sh.
-#define FW_VERSION     "1.2.0"
+#define FW_VERSION     "1.2.1"
 
 #ifndef UPDATE_BASE_URL                     // surchargeable par build_flags
 #define UPDATE_BASE_URL "https://github.com/didux123/veilleuse-dexcom/releases/latest/download"

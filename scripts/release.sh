@@ -13,8 +13,16 @@ cd "$(dirname "$0")/.."
 
 MAIN=firmware/src/main.cpp
 BIN=firmware/.pio/build/d1_mini/firmware.bin
+SECRETS=firmware/include/secrets.h
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
+DEVSECRETS="$TMP/secrets.h.dev"
+HAD_SECRETS=0
+
+# Le secrets.h du poste de dev doit TOUJOURS etre remis en place, meme si le
+# script echoue ou est interrompu.
+restore_secrets() { [[ "$HAD_SECRETS" == 1 ]] && cp "$DEVSECRETS" "$SECRETS"; }
+cleanup() { restore_secrets; rm -rf "$TMP"; }
+trap cleanup EXIT INT TERM
 
 # --- 1. Arbre propre et synchronise avec origin/main ---------------------
 if [[ -n "$(git status --porcelain)" ]]; then
@@ -39,10 +47,44 @@ if git rev-parse -q --verify "refs/tags/v$VER" >/dev/null; then
   exit 1
 fi
 
-# --- 3. Build ------------------------------------------------------------
-echo "== Build v$VER =="
+# --- 3. Build SANS identifiants ------------------------------------------
+# Un binaire publie ne doit contenir AUCUN identifiant : il est telechargeable
+# par n'importe qui et `strings` suffit a les extraire. Le secrets.h du poste
+# de dev est donc mis de cote pendant la compilation.
+if [[ -f "$SECRETS" ]]; then
+  cp "$SECRETS" "$DEVSECRETS"
+  HAD_SECRETS=1
+fi
+cat > "$SECRETS" <<'EOS'
+// Genere par scripts/release.sh — un binaire publie ne contient aucun
+// identifiant : la lampe se configure par son portail captif.
+#pragma once
+#define WIFI_SSID       ""
+#define WIFI_PASSWORD   ""
+#define DEXCOM_USERNAME ""
+#define DEXCOM_PASSWORD ""
+#define OTA_PASSWORD    "veilleuse"
+EOS
+
+echo "== Build v$VER (sans identifiants) =="
 ( cd firmware && pio run -e d1_mini )
 [[ -f "$BIN" ]] || { echo "ERREUR : $BIN absent apres le build." >&2; exit 1; }
+
+# --- 3b. Garde-fou : verifier que rien n'a fuite dans le binaire ----------
+# Le seul filet qui compte : on cherche litteralement les valeurs du secrets.h
+# de dev dans le binaire compile. Si l'une y est, on refuse de publier.
+if [[ "$HAD_SECRETS" == 1 ]]; then
+  for k in WIFI_SSID WIFI_PASSWORD DEXCOM_USERNAME DEXCOM_PASSWORD; do
+    val=$(grep -oE "$k[[:space:]]+\"[^\"]*\"" "$DEVSECRETS" | sed -E 's/.*"(.*)"/\1/' || true)
+    [[ ${#val} -lt 4 ]] && continue
+    if strings "$BIN" | grep -qF -- "$val"; then
+      echo "ERREUR : le binaire contient la valeur de $k de votre secrets.h." >&2
+      echo "         Publication annulee (fuite d'identifiants evitee)." >&2
+      exit 1
+    fi
+  done
+  echo "   garde-fou : aucun identifiant du poste de dev dans le binaire."
+fi
 
 cp "$BIN" "$TMP/firmware.bin"
 printf '%s\n' "$VER" > "$TMP/version.txt"
