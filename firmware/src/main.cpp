@@ -33,6 +33,7 @@
 #include <WiFiManager.h>
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoOTA.h>
+#include <ESP8266mDNS.h>
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 #include <time.h>
@@ -552,11 +553,23 @@ static void onPortalSave() {
 }
 
 // ------------------- Mise a jour automatique -------------------
+// Tailles de buffer TLS mesurees sur objects.githubusercontent.com :
+// il n'annonce pas de max_fragment_length et envoie des enregistrements
+// pleine taille pour les gros transferts. Un buffer de reception de 4 Ko
+// suffit pour une petite reponse (version.txt) mais renvoie ZERO octet sur
+// le telechargement du binaire : celui-ci exige 16 Ko.
+#define TLS_RX_SMALL   4096
+#define TLS_RX_BULK    16384
+#define TLS_TX         512
+// Marge de heap exigee avant une mise a jour (buffer 16 Ko + HTTPClient).
+#define UPDATE_MIN_HEAP 28000
+#define UPDATE_MAX_TRIES 3     // essais par version avant abandon
+
 // Recupere le contenu de version.txt sur GitHub. "" si echec.
 static String fetchRemoteVersion() {
   BearSSL::WiFiClientSecure client;
   client.setInsecure();
-  client.setBufferSizes(1024, 1024);     // quelques octets a lire
+  client.setBufferSizes(TLS_RX_SMALL, TLS_TX);
   HTTPClient http;
   http.setTimeout(10000);
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);  // github -> objects.*
@@ -571,14 +584,14 @@ static String fetchRemoteVersion() {
 }
 
 // Telechargement + flash (bloquant ~30-60 s, reboot automatique si OK).
-static void doFirmwareUpdate(const String& remoteVer) {
-  // Ecrit AVANT le flash : si celui-ci echoue, cette version ne sera
-  // jamais retentee (anti-boucle). Nettoye au boot suivant si succes.
-  writeLineFile(UPDATE_TRY_PATH, remoteVer);
+static void doFirmwareUpdate(const String& remoteVer, int tries) {
+  // Ecrit AVANT le flash : si la carte n'en revient pas, on saura au boot
+  // suivant que cette version a deja ete tentee (anti-boucle de brique).
+  writeLineFile(UPDATE_TRY_PATH, remoteVer + " " + String(tries + 1));
 
   BearSSL::WiFiClientSecure client;
   client.setInsecure();
-  client.setBufferSizes(1024, 1024);
+  client.setBufferSizes(TLS_RX_BULK, TLS_TX);   // 16 Ko : indispensable ici
   ESPhttpUpdate.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   ESPhttpUpdate.onStart([]() {
     Serial.println("[upd] telechargement et flash...");
@@ -598,27 +611,40 @@ static void doFirmwareUpdate(const String& remoteVer) {
   // HTTP_UPDATE_OK : la carte a redemarre, on ne repasse pas ici.
 }
 
-static void checkAutoUpdate() {
-  if (WiFi.status() != WL_CONNECTED) return;
+// Retourne true si la verification a pu aller au bout (peu importe qu'une
+// mise a jour ait ete trouvee), false si elle a ete reportee.
+static bool checkAutoUpdate() {
+  if (WiFi.status() != WL_CONNECTED) return false;
   // Portail ouvert AVEC quelqu'un dessus : ne pas couper la configuration.
   // (Une lampe seule en mode correctif doit pouvoir se reparer la nuit.)
-  if (wm.getConfigPortalActive() && WiFi.softAPgetStationNum() > 0) return;
-  if (mgdl >= 0 && mgdl < gCfg.hypo) return;      // jamais pendant une alarme
-  if (ESP.getFreeHeap() < 24000) {
+  if (wm.getConfigPortalActive() && WiFi.softAPgetStationNum() > 0) return false;
+  if (mgdl >= 0 && mgdl < gCfg.hypo) return false;   // jamais pendant une alarme
+  if (ESP.getFreeHeap() < UPDATE_MIN_HEAP) {
     Serial.printf("[upd] heap %u trop bas, report\n", ESP.getFreeHeap());
-    return;
+    return false;
   }
   String remote = fetchRemoteVersion();
-  if (remote.length() == 0 || remote == FW_VERSION) return;
+  if (remote.length() == 0) return false;
   // Inegalite stricte (et non ">") : permet de revenir en arriere en
   // republiant une version anterieure. Pas de ping-pong : apres flash les
   // versions sont egales.
-  if (readLineFile(UPDATE_TRY_PATH) == remote) {
-    Serial.printf("[upd] v%s deja tentee sans succes, ignoree\n", remote.c_str());
-    return;
+  if (remote == FW_VERSION) return true;
+
+  // Suivi des tentatives : "<version> <n>". Un echec reseau passager doit
+  // pouvoir etre retente, mais un binaire durablement mauvais ne doit pas
+  // boucler indefiniment.
+  String tried = readLineFile(UPDATE_TRY_PATH);
+  int tries = 0;
+  int sp = tried.indexOf(' ');
+  if (sp > 0 && tried.substring(0, sp) == remote) tries = tried.substring(sp + 1).toInt();
+  else if (tried == remote) tries = 1;              // ancien format
+  if (tries >= UPDATE_MAX_TRIES) {
+    Serial.printf("[upd] v%s echouee %d fois, abandonnee\n", remote.c_str(), tries);
+    return true;
   }
-  Serial.printf("[upd] %s -> %s\n", FW_VERSION, remote.c_str());
-  doFirmwareUpdate(remote);
+  Serial.printf("[upd] %s -> %s (essai %d)\n", FW_VERSION, remote.c_str(), tries + 1);
+  doFirmwareUpdate(remote, tries);
+  return true;
 }
 
 // ------------------- Setup / Loop -------------------
@@ -640,10 +666,13 @@ void setup() {
   LittleFS.begin();
 
   // Mise a jour precedente : succes confirme si la version tentee est celle
-  // qui tourne maintenant.
-  if (readLineFile(UPDATE_TRY_PATH) == FW_VERSION) {
+  // qui tourne maintenant (fichier "<version> <essais>").
+  String tried = readLineFile(UPDATE_TRY_PATH);
+  int sp = tried.indexOf(' ');
+  if (tried.length() && (tried == FW_VERSION ||
+                         (sp > 0 && tried.substring(0, sp) == FW_VERSION))) {
     LittleFS.remove(UPDATE_TRY_PATH);
-    Serial.println("[upd] mise a jour precedente confirmee");
+    Serial.printf("[upd] mise a jour vers %s confirmee\n", FW_VERSION);
   }
 
   if (loadConfig()) {
@@ -709,6 +738,9 @@ void setup() {
   ArduinoOTA.onEnd([]() { Serial.println("[ota] termine, reboot"); });
   ArduinoOTA.onError([](ota_error_t e) { Serial.printf("[ota] erreur %u\n", e); });
   ArduinoOTA.begin();
+  // Publie la version en mDNS : permet de savoir ce que tourne chaque lampe
+  // du reseau sans la debrancher (dns-sd -L <hostname> _arduino._tcp local).
+  MDNS.addServiceTxt("arduino", "tcp", "fw", FW_VERSION);
 }
 
 void loop() {
@@ -808,10 +840,9 @@ void loop() {
     } else if (dexUpdate()) {
       failCount = 0;
       pollInterval = POLL_BASE_MS;       // retour a la normale
-      if (!gBootCheckDone) {             // check MAJ apres le 1er poll reussi
-        gBootCheckDone = true;
-        checkAutoUpdate();
-      }
+      // Check MAJ apres le 1er poll reussi. S'il a ete reporte (heap,
+      // portail...), on retentera au poll suivant plutot que d'attendre 4 h.
+      if (!gBootCheckDone) gBootCheckDone = checkAutoUpdate();
     } else {
       failCount++;
       pollInterval = min(pollInterval * 2, POLL_MAX_MS);  // backoff 60s -> 5min
