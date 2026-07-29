@@ -35,8 +35,8 @@ et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 | 🟠🔄 Gyrophare orange | Hyper sévère (> 300 mg/dL) : 6 LED tournantes — du mouvement, pas plus de lumière |
 | 🔴 **Rouge pulsé pleine puissance** | **Hypoglycémie** (ignore le mode nuit) |
 | ⚪ Blanc doux fixe | Pas de données fiables (périmées > 15 min, WiFi ou Dexcom injoignable) |
-| 🟣 Violet respirant | Mode configuration WiFi |
-| 🔴🔵 Rouge/bleu alterné | Identifiants Dexcom refusés |
+| 🟣 Violet respirant | Mode configuration (portail WiFi ouvert) |
+| 🟣🔴 Violet/rouge | Identifiants Dexcom à corriger — le portail est ouvert pour ça |
 
 Jamais de « faux vert » : si la lampe ne sait pas, elle le montre.
 
@@ -45,15 +45,23 @@ Jamais de « faux vert » : si la lampe ne sait pas, elle le montre.
 - **Autonome** : l'ESP8266 fait l'authentification Dexcom Share (3 étapes),
   le poll toutes les 60 s, et gère sa session proprement (un seul retry,
   jamais de martèlement de l'API).
-- **Portail captif WiFi** : sans réseau connu, la lampe émet `Veilleuse-Dexcom`
-  → on configure le WiFi depuis un téléphone. **Multi-réseaux** : chaque
-  réseau rejoint est mémorisé (jusqu'à 10), la lampe est nomade.
-- **Mode nuit** : luminosité réduite de 22 h à 7 h (heure de Paris,
-  été/hiver automatique) — la couleur reste lisible sans éclairer la
-  chambre. L'alarme hypo reste à pleine puissance.
-- **Mise à jour OTA** : reflashage par WiFi (`veilleuse.local`), avec barre
-  de progression sur l'anneau LED.
-- Backoff exponentiel sur erreur réseau, détection de fraîcheur par NTP.
+- **Zéro configuration à compiler** : au premier branchement la lampe émet son
+  propre réseau `Veilleuse-XXXX` → depuis un téléphone on saisit le WiFi, le
+  compte Dexcom (Europe ou US) **et les réglages** (seuils, mode nuit). Tout
+  est mémorisé dans la lampe.
+- **Multi-réseaux** : chaque WiFi rejoint est mémorisé (jusqu'à 10), la lampe
+  est nomade et se reconnecte au meilleur réseau connu.
+- **Mode nuit** : luminosité réduite la nuit (plage et intensité réglables,
+  heure de Paris avec été/hiver automatique) — la couleur reste lisible sans
+  éclairer la chambre. L'alarme hypo reste à pleine puissance.
+- **Mises à jour automatiques** : chaque lampe vérifie les GitHub Releases du
+  projet et s'installe la nouvelle version toute seule, la nuit, avec barre de
+  progression sur l'anneau (voir [firmware/README.md](firmware/README.md)).
+  Un reflashage OTA manuel depuis le poste de dev reste possible.
+- **Identité unique par lampe** (dérivée de la puce) : plusieurs veilleuses
+  cohabitent sur le même réseau sans collision.
+- Backoff exponentiel sur erreur réseau, détection de fraîcheur par NTP,
+  correction des identifiants sans reflash.
 
 ### Matériel (~10 €)
 
@@ -69,10 +77,13 @@ Câblage : `5V→5V`, `GND→G`, `DIN→D1` (GPIO5). Détails dans
 
 ```bash
 cd firmware
-cp include/secrets.h.example include/secrets.h   # remplir ses identifiants
-pio run -t upload                                # premier flash par USB
-pio run -e d1_mini_ota -t upload                 # les suivants par WiFi
+cp include/secrets.h.example include/secrets.h   # peut rester vide !
+pio run -t upload                                # flash par USB
 ```
+
+Au premier démarrage, se connecter au réseau `Veilleuse-XXXX` émis par la
+lampe (LEDs violettes) et remplir le formulaire : WiFi, compte Dexcom,
+seuils. Ensuite elle se débrouille seule, mises à jour comprises.
 
 ## Le dashboard web (optionnel)
 
