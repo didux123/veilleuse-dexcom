@@ -65,6 +65,7 @@ cohabitent sans collision. Visible dans `GET /api/diag` ou en série au boot :
 | `GET /api/config` | Réglages courants — **jamais de mot de passe** |
 | `GET /api/scan` | Réseaux vus (cache ; relance un scan en fond) |
 | `POST /api/save` | Enregistre (x-www-form-urlencoded) puis redémarre |
+| `POST /api/forget` | Réinitialisation : efface WiFi, compte Dexcom et réglages, puis redémarre |
 | `GET /api/diag` | Heap, uptime, `lps`, WiFi, état — diagnostic |
 | `GET /api/log` | Les ~1000 derniers caractères du journal |
 | `GET /api/portal?on=1` | Force l'ouverture du portail (test sans couper le WiFi) |
@@ -155,6 +156,25 @@ lampe** (canari) puis publie la release. Incrémenter `FW_VERSION` dans
 Pour tester la chaîne d'auto-update sans exposer le parc : publier une
 **prerelease** (invisible de `latest`) et flasher une lampe de test avec
 l'environnement `d1_mini_testupd`.
+
+## Réinitialisation
+
+Le bouton « Réinitialiser la lampe… » de la page (section Maintenance) demande
+une **seconde confirmation** avant d'agir, puis appelle `POST /api/forget` :
+`/wifis.txt` et `/update.txt` sont supprimés, une configuration **vide** est
+écrite (et non pas le fichier supprimé — son absence ferait retomber sur les
+identifiants de `secrets.h`), et le réseau mémorisé par le SDK est oublié juste
+avant le redémarrage. La lampe repart en portail, comme sortie de boîte.
+
+L'endpoint n'accepte que `POST` : on ne peut pas effacer une lampe en cliquant
+sur un lien. Et la réponse `200` est envoyée **avant** de toucher au WiFi —
+couper la STA plus tôt empêcherait la réponse d'arriver et la page annoncerait
+un échec alors que l'effacement a réussi.
+
+⚠️ Sur un build de développement, `secrets.h` réintroduit son WiFi au
+redémarrage (le seed) : la lampe se reconnecte donc au réseau, mais sans
+identifiants Dexcom. Sur un binaire de production (secrets vides) l'oubli est
+total.
 
 ## Fichiers en flash (LittleFS)
 

@@ -76,6 +76,9 @@ button{font:inherit;cursor:pointer;border:0;border-radius:var(--r);color:var(--s
 .adr{display:grid;gap:8px;padding:14px;border-color:var(--hi);align-items:start}
 .adr code{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--hi);word-break:break-all}
 .why{font-size:13px;font-style:italic;color:var(--i3);line-height:1.5;margin:2px 0 0}
+.bd{border-color:rgba(255,31,51,.5);color:var(--lo)}
+.bd[aria-pressed=true]{background:var(--lo);border-color:var(--lo);color:#14000A;font-weight:700}
+.cpy{min-height:46px;padding:0 16px;background:var(--hi);color:#201203;font-size:14px;font-weight:700;border-radius:12px;justify-self:start}
 .tt{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:428px;margin:0 auto;display:flex;align-items:center;gap:12px;background:var(--b7);border:3px solid var(--ok);border-radius:18px;padding:14px;font-size:14px;font-weight:600;animation:tin .5s cubic-bezier(.34,1.56,.64,1) both}
 .tt i{width:22px;height:22px;border-radius:99px;background:var(--ok);color:#05240F;display:grid;place-items:center;font-size:13px;font-weight:800;font-style:normal;flex:none}
 .tt.e{border-color:var(--lo)}.tt.e i{background:var(--lo);color:#14000A}
@@ -168,12 +171,15 @@ svg{display:block;overflow:visible;margin:0 auto}
 <p class="why">L'hypo ignore le mode nuit : à 22 % elle ne réveillerait personne.</p>
 <h2>Maintenance</h2>
 <label class="ck card"><input id="ota" type="checkbox" checked><span class="gr"><b>Mises à jour automatiques</b><small>installées la nuit, jamais pendant une alerte</small></span></label>
+<button type="button" class="b2 bd" id="rstB" aria-pressed="false" onclick="forget()">Réinitialiser la lampe…</button>
+<p class="why" id="rstWhy">Efface le WiFi, le compte Dexcom et les réglages. À faire avant de donner la lampe à quelqu'un.</p>
 <div class="card adr">
 <b style="font-size:14px">Note bien cette adresse</b>
 <p style="font-size:13.5px">Cette page de réglages reste accessible à <code id="aHost">http://veilleuse-xxxxxx.local/</code> depuis n'importe quel appareil connecté au <b>même réseau WiFi</b>. Le portail de configuration, lui, disparaît après l'enregistrement.</p>
+<button type="button" class="cpy" onclick="cp('aHost',this)">Copier l'adresse</button>
 </div>
 <button class="b1" onclick="save()">Enregistrer et redémarrer</button>
-<button class="b2" onclick="go(3)">Retour</button>
+<button class="b2" id="s4back" onclick="back4()">Retour</button>
 </section>
 
 <!-- 5 · confirmation -->
@@ -184,6 +190,7 @@ svg{display:block;overflow:visible;margin:0 auto}
 <div class="hd"><span style="font-weight:400">seuils</span><span style="color:var(--i1)" id="oTh">70 / 180 / 300</span></div>
 <div class="hd"><span style="font-weight:400">nuit</span><span style="color:var(--i1)" id="oNi">22:00 → 07:00 · 22 %</span></div>
 </div>
+<button class="b1" onclick="cp('oHost',this)">Copier l'adresse de la page</button>
 <button class="b2" onclick="go(4)">Modifier les réglages</button>
 </section>
 
@@ -197,6 +204,33 @@ function eye(i,b){var e=$(i);e.type=e.type=='password'?'text':'password';b.textC
 function ap(e,v){e.setAttribute('aria-pressed',v?'true':'false')}
 function reg(r){S.region=r;ap($('rEU'),r=='eu');ap($('rUS'),r=='us')}
 function pm(i,d){var e=$(i),v=+e.textContent+d;if(v>=40&&v<=400)e.textContent=v}
+// Depuis l'ecran reglages, "Retour" ne doit pas relancer l'onboarding.
+function back4(){go(S.cfg?2:3)}
+// navigator.clipboard n'existe pas en http simple sur beaucoup de navigateurs
+// (iOS notamment) : on retombe sur un champ temporaire + execCommand.
+function cp(i,b){
+ var t=$(i).textContent.trim();if(t.indexOf('http')!==0)t='http://'+t+'/';
+ var lab=b.textContent,ok=function(){b.textContent='Adresse copiée ✓';toast('Adresse copiée');setTimeout(function(){b.textContent=lab},2500)};
+ var fb=function(){var e=document.createElement('input');e.value=t;e.style.position='fixed';e.style.opacity=0;
+  document.body.appendChild(e);e.focus();e.select();
+  try{document.execCommand('copy');ok()}catch(x){toast('Copie impossible — note l\'adresse',1)}
+  document.body.removeChild(e)};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb()
+}
+// Action destructive : deux appuis, avec retour a l'etat normal apres 5 s.
+function forget(){
+ var b=$('rstB');
+ if(b.getAttribute('aria-pressed')!='true'){
+  ap(b,1);b.textContent='Confirmer : tout effacer';
+  $('rstWhy').textContent='Appuie une seconde fois pour effacer. Annulé dans 5 s.';
+  clearTimeout(S.rk);S.rk=setTimeout(function(){ap(b,0);b.textContent='Réinitialiser la lampe…';
+   $('rstWhy').textContent='Efface le WiFi, le compte Dexcom et les réglages. À faire avant de donner la lampe à quelqu\'un.'},5000);
+  return}
+ clearTimeout(S.rk);b.textContent='Effacement…';lamp('bo');
+ fetch('/api/forget',{method:'POST'}).then(function(r){if(!r.ok)throw 0;
+  go(1);lamp('su');toast('Lampe réinitialisée — elle redémarre')})
+ .catch(function(){ap(b,0);b.textContent='Réinitialiser la lampe…';toast('Échec de la réinitialisation',1)})
+}
 function toast(m,err){var t=$('tt');t.hidden=0;t.className='tt'+(err?' e':'');$('ttx').textContent=m;clearTimeout(S.tk);S.tk=setTimeout(function(){t.hidden=1},3500)}
 function lamp(s){L.dataset.s=s}
 function j(u,o){return fetch(u,o).then(function(r){if(!r.ok)throw 0;return r.json()})}
@@ -237,7 +271,12 @@ function load(){
   $('nOn').value=c.nightOn;$('nOff').value=c.nightOff;$('dim').value=c.dim;D.textContent=c.dim+' %';
   $('ota').checked=c.ota!==false;
   if(c.host)$('aHost').textContent='http://'+c.host+'/';
-  if(c.configured)go(4)
+  if(c.configured){
+   // Mode reglages : on n'est plus dans l'onboarding, le bouton du bas doit
+   // le dire clairement au lieu d'un "Retour" qui ramene a l'etape 3.
+   S.cfg=1;$('s4back').textContent='Changer de réseau ou de compte';
+   go(4)
+  }
  }).catch(function(){})
 }
 function save(){

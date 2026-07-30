@@ -58,7 +58,7 @@
 
 // ------------------- Version / mise a jour -------------------
 // FW_VERSION est la source de verite, lue par scripts/release.sh.
-#define FW_VERSION     "1.2.1"
+#define FW_VERSION     "1.2.2"
 
 #ifndef UPDATE_BASE_URL                     // surchargeable par build_flags
 #define UPDATE_BASE_URL "https://github.com/didux123/veilleuse-dexcom/releases/latest/download"
@@ -112,6 +112,7 @@ static bool          gPortal       = false;  // softAP + DNS actifs
 static bool          gPortalForced = false;  // /api/portal?on=1 (diagnostic)
 static unsigned long gStaLostAt    = 0;      // STA tombee depuis (debounce)
 static unsigned long gRebootAt     = 0;      // 0 = pas de reboot programme
+static bool          gForgetWifi   = false;  // oublier le reseau au reboot
 static unsigned long gLastHttpAt   = 0;      // derniere requete servie
 static unsigned long wifiRetryAt   = 0;
 static bool          gConnecting   = false;  // wifiMulti.run() en cours
@@ -842,6 +843,28 @@ static void handleSave() {
   gRebootAt = millis() + 1200;
 }
 
+// Reinitialisation : la lampe redevient vierge (utile avant de la donner).
+static void handleForget() {
+  gLastHttpAt = millis();
+  logf("[cfg] REINITIALISATION demandee\n");
+  LittleFS.remove("/wifis.txt");
+  LittleFS.remove(UPDATE_TRY_PATH);
+  // On ecrit une config VIDE plutot que de supprimer le fichier : son absence
+  // ferait retomber sur les identifiants de secrets.h (pratique en dev, mais
+  // ici on veut vraiment une lampe vierge).
+  gCfg = Config();
+  gCfg.user = "";
+  gCfg.pass = "";
+  saveConfig();
+  // On repond AVANT de toucher au WiFi : couper la STA ici empecherait la
+  // reponse d'arriver, et la page annoncerait un echec alors que tout a
+  // fonctionne. L'oubli du reseau memorise par le SDK se fait juste avant
+  // le redemarrage (voir la fin de loop()).
+  server.send(200, F("application/json"), F("{\"ok\":true}"));
+  gForgetWifi = true;
+  gRebootAt = millis() + 1200;
+}
+
 // Hors spec designer, mais indispensables : il n'y a pas de port serie.
 static void handleDiag() {
   String o; o.reserve(448); o = '{';
@@ -920,6 +943,7 @@ static void registerRoutes() {
   server.on(F("/api/config"), HTTP_GET,  handleConfigGet);
   server.on(F("/api/scan"),   HTTP_GET,  handleScan);
   server.on(F("/api/save"),   HTTP_POST, handleSave);
+  server.on(F("/api/forget"), HTTP_POST, handleForget);
   server.on(F("/api/diag"),   HTTP_GET,  handleDiag);
   server.on(F("/api/log"),    HTTP_GET,  handleLog);
   server.on(F("/api/portal"), HTTP_GET,  handlePortal);
@@ -1270,6 +1294,9 @@ void loop() {
     logf("[sys] redemarrage\n");
     server.stop();
     if (gPortal) { dns.stop(); WiFi.softAPdisconnect(true); }
+    // Reinitialisation : effacer les identifiants WiFi memorises par le SDK
+    // (sinon la carte se reconnecterait toute seule au dernier reseau).
+    if (gForgetWifi) { WiFi.disconnect(true); delay(100); }
     delay(100);
     ESP.restart();             // jamais ESP.reset() : la reponse serait tronquee
   }
