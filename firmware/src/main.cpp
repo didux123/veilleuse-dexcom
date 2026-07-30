@@ -58,7 +58,7 @@
 
 // ------------------- Version / mise a jour -------------------
 // FW_VERSION est la source de verite, lue par scripts/release.sh.
-#define FW_VERSION     "1.2.2"
+#define FW_VERSION     "1.2.3"
 
 #ifndef UPDATE_BASE_URL                     // surchargeable par build_flags
 #define UPDATE_BASE_URL "https://github.com/didux123/veilleuse-dexcom/releases/latest/download"
@@ -113,6 +113,10 @@ static bool          gPortalForced = false;  // /api/portal?on=1 (diagnostic)
 static unsigned long gStaLostAt    = 0;      // STA tombee depuis (debounce)
 static unsigned long gRebootAt     = 0;      // 0 = pas de reboot programme
 static bool          gForgetWifi   = false;  // oublier le reseau au reboot
+// Configuration appliquee a chaud depuis le portail : on attend de savoir si
+// le WiFi et le compte Dexcom repondent avant de redemarrer (voir handleSave).
+static bool          gPending      = false;
+static unsigned long gPendingSince = 0;
 static unsigned long gLastHttpAt   = 0;      // derniere requete servie
 static unsigned long wifiRetryAt   = 0;
 static bool          gConnecting   = false;  // wifiMulti.run() en cours
@@ -485,6 +489,25 @@ static int dexFetch() {
   return 0;
 }
 
+// Verifie un couple email/mot de passe sans toucher a l'etat courant, pour
+// pouvoir repondre a l'utilisateur pendant qu'il est encore sur la page.
+// La premiere etape de l'API suffit : elle rejette explicitement un mauvais
+// mot de passe. UNE seule tentative par appel (regle anti-verrouillage).
+// Retour : 1 = valides, 0 = refuses, -1 = indetermine (reseau ou Dexcom KO).
+static int dexProbe(const String& user, const String& pass, bool us) {
+  const char* base = us ? "https://share2.dexcom.com/ShareWebServices/Services"
+                        : "https://shareous1.dexcom.com/ShareWebServices/Services";
+  int code;
+  String payload = String("{\"accountName\":\"") + user +
+                   "\",\"password\":\"" + pass +
+                   "\",\"applicationId\":\"" + DEX_APP_ID + "\"}";
+  String body = httpPost(String(base) + "/General/AuthenticatePublisherAccount",
+                         payload, code);
+  logf("[dex] verification des identifiants : HTTP %d\n", code);
+  if (code == 200) return firstQuoted(body).length() == 36 ? 1 : -1;
+  return isCredentialError(body) ? 0 : -1;
+}
+
 // Un cycle complet : session valide -> fetch ; sinon (re)login UNE fois.
 // Jamais de boucle : protege le compte du verrouillage.
 static bool dexUpdate() {
@@ -742,6 +765,10 @@ static void handleStatus() {
   jsonS(o, "trend", trendArrow());
   jsonI(o, "age",  age);
   jsonS(o, "fw",   FW_VERSION);
+  // Permettent a la page de distinguer, apres une premiere configuration,
+  // "ca connecte encore", "WiFi refuse" et "Dexcom refuse".
+  jsonB(o, "wifi", WiFi.isConnected());
+  jsonB(o, "pending", gPending);
   jsonS(o, "host", String(gHostname) + ".local");
   jsonEnd(o);
   sendJson(o);
@@ -804,15 +831,38 @@ static void handleSave() {
     return;
   }
 
+  // Champs de mot de passe vides = "garder l'existant". On calcule les
+  // nouvelles valeurs AVANT de toucher a gCfg, pour pouvoir les verifier.
+  String newUser = mail.length() ? mail : gCfg.user;
+  String newPass = dpw.length()  ? dpw  : gCfg.pass;
+  bool credsChanged = (newUser != gCfg.user) || (newPass != gCfg.pass) ||
+                      (us != gCfg.regionUS);
+
+  // Verification immediate, tant que l'utilisateur est devant sa page : sans
+  // elle, une faute de frappe ne se manifeste qu'apres le redemarrage, par un
+  // discret motif violet/rouge — et en portail captif le telephone a souvent
+  // deja quitte le reseau de la lampe, donc le message n'arrive jamais.
+  // Possible seulement si la lampe a du reseau : au premier branchement elle
+  // n'a que son point d'acces et ne peut joindre personne.
+  // Une seule tentative par clic : la regle anti-verrouillage du compte
+  // Dexcom reste intacte (une action humaine = un essai).
+  if (credsChanged && WiFi.isConnected() && newUser.length() && newPass.length()) {
+    int r = dexProbe(newUser, newPass, us);
+    if (r == 0) {
+      logf("[cfg] refus : identifiants Dexcom rejetes par Dexcom\n");
+      // Rien n'est enregistre, pas de redemarrage : l'utilisateur corrige.
+      server.send(400, F("application/json"), F("{\"ok\":false,\"err\":\"dexcom\"}"));
+      return;
+    }
+    if (r < 0) logf("[cfg] verification impossible (reseau) : on enregistre quand meme\n");
+  }
+
   gCfg.hypo = lo; gCfg.hyper = hi; gCfg.hyper2 = sev;
   gCfg.nightStart = nOn; gCfg.nightEnd = nOff; gCfg.nightDim = dim;
   gCfg.otaAuto = ota;
-
-  bool credsChanged = false;
-  // Champs vides = "garder l'existant".
-  if (mail.length() && mail != gCfg.user) { gCfg.user = mail; credsChanged = true; }
-  if (dpw.length()  && dpw  != gCfg.pass) { gCfg.pass = dpw;  credsChanged = true; }
-  if (us != gCfg.regionUS) { gCfg.regionUS = us; credsChanged = true; }
+  gCfg.user = newUser;
+  gCfg.pass = newPass;
+  gCfg.regionUS = us;
 
   if (!saveConfig()) {
     server.send(500, F("application/json"), F("{\"ok\":false,\"err\":\"flash\"}"));
@@ -836,9 +886,26 @@ static void handleSave() {
        gCfg.regionUS ? "us" : "ous", lo, hi, sev,
        hhmm(nOn).c_str(), hhmm(nOff).c_str(), dim, (int)ota);
 
-  // 200 AVANT le reboot : en portail captif, le redemarrage fait disparaitre
-  // l'AP et ferme la fenetre du telephone. Ces 1,2 s sont le seul moment ou
-  // l'utilisateur voit l'ecran final et l'adresse a noter.
+  // Deux facons d'appliquer, selon qu'on avait du reseau ou non.
+  if (!WiFi.isConnected() && ssid.length()) {
+    // PREMIERE CONFIGURATION (portail captif, aucun acces Internet).
+    // On ne redemarre PAS : un reboot fait disparaitre le point d'acces
+    // pendant 15 s, le telephone part voir ailleurs et l'utilisateur
+    // n'apprend jamais qu'un mot de passe etait faux. On applique donc a
+    // chaud, point d'acces maintenu, et la page suit le verdict en direct.
+    String pw = wpw.length() ? wpw : lookupWifiPass(ssid);
+    logf("[cfg] application a chaud : connexion a %s\n", ssid.c_str());
+    server.send(200, F("application/json"), F("{\"ok\":true,\"pending\":true}"));
+    WiFi.begin(ssid.c_str(), pw.length() ? pw.c_str() : nullptr);
+    gPending = true;
+    gPendingSince = millis();
+    nextPollAt = millis() + 4000;   // laisse la connexion s'etablir
+    return;
+  }
+
+  // LAMPE DEJA EN LIGNE : les identifiants ont ete verifies ci-dessus, le
+  // redemarrage est donc sans surprise. Le 200 part AVANT : ces 1,2 s sont le
+  // seul moment ou l'utilisateur voit l'ecran final et l'adresse a noter.
   server.send(200, F("application/json"), F("{\"ok\":true}"));
   gRebootAt = millis() + 1200;
 }
@@ -1289,6 +1356,24 @@ void loop() {
   pollScan();
   wifiTick();
   portalTick();
+
+  // Verdict d'une configuration appliquee a chaud. On ne redemarre qu'une fois
+  // la reussite constatee (WiFi + une vraie mesure), et avec du retard pour
+  // laisser la page afficher sa confirmation et l'adresse a noter. En cas
+  // d'echec : aucun redemarrage, le portail reste ouvert pour corriger.
+  if (gPending) {
+    if (fatalCreds) {
+      gPending = false;
+      logf("[cfg] verdict : identifiants Dexcom refuses\n");
+    } else if (WiFi.isConnected() && mgdl >= 0) {
+      gPending = false;
+      gRebootAt = millis() + 10000;
+      logf("[cfg] verdict : tout fonctionne, redemarrage dans 10 s\n");
+    } else if ((long)(millis() - gPendingSince) > 120000) {
+      gPending = false;      // on arrete d'attendre, la page montrera l'etat
+      logf("[cfg] verdict : pas de reponse en 120 s\n");
+    }
+  }
 
   if (gRebootAt && (long)(millis() - gRebootAt) >= 0) {
     logf("[sys] redemarrage\n");

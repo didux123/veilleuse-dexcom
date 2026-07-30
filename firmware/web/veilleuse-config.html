@@ -261,6 +261,24 @@ function status(){
   $('aHost').textContent='http://'+d.host+'/';
   $('stTx').textContent=d.label;
   $('stSub').textContent=d.mgdl?d.mgdl+' mg/dL '+(d.trend||'')+' · il y a '+d.age+' s':'aucune donnée';
+  // Suivi d'une premiere configuration appliquee a chaud : la lampe teste le
+  // WiFi puis le compte Dexcom, on montre le verdict au fur et a mesure.
+  if(S.pending){
+   var el=(Date.now()-S.psince)/1000;
+   if(d.state=='er'){
+    S.pending=0;clearInterval(S.pi);
+    toast('Identifiants Dexcom refusés — vérifie l\'email et le mot de passe',1);
+    $('dpw').value='';go(3);$('dpw').focus();return}
+   if(!d.wifi){
+    $('okTx').textContent=el>25
+     ?'Réseau WiFi introuvable, ou mot de passe du WiFi incorrect.'
+     :'Connexion au réseau WiFi…'}
+   else if(d.mgdl){
+    S.pending=0;clearInterval(S.pi);
+    $('okTx').textContent='Tout fonctionne. Elle redémarre une dernière fois.';
+    toast('Connectée — '+d.mgdl+' mg/dL')}
+   else $('okTx').textContent='WiFi connecté. Première lecture en cours…';
+   return}
   if(d.state=='er')toast('Identifiants Dexcom refusés',1)
  }).catch(function(){})
 }
@@ -283,13 +301,35 @@ function save(){
  var b=new URLSearchParams({ssid:S.ssid,wpw:$('wpw').value,email:$('dem').value,dpw:$('dpw').value,
  region:S.region,lo:$('tLo').textContent,hi:$('tHi').textContent,sev:$('tHs').textContent,
  nightOn:$('nOn').value,nightOff:$('nOff').value,dim:$('dim').value,ota:$('ota').checked?1:0});
- lamp('bo');
+ // La lampe verifie les identifiants Dexcom avant d'enregistrer : ca prend
+ // quelques secondes, il faut le dire.
+ var sb=document.querySelector('#s4 .b1'),lab=sb.textContent;
+ sb.textContent='Vérification…';sb.disabled=1;lamp('bo');
  fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b})
- .then(function(r){if(!r.ok)throw 0;
+ .then(function(r){
+  if(r.ok)return r.json().then(function(j){return j},function(){return {}});
+  return r.json().then(function(j){throw j||{}},function(){throw {}})})
+ .then(function(j){
+  sb.textContent=lab;sb.disabled=0;
   $('oTh').textContent=$('tLo').textContent+' / '+$('tHi').textContent+' / '+$('tHs').textContent;
   $('oNi').textContent=$('nOn').value+' → '+$('nOff').value+' · '+$('dim').value+' %';
-  toast('Réglages enregistrés — redémarrage');go(5);setTimeout(status,6000)})
- .catch(function(){lamp('er');toast('Échec de l\'enregistrement',1)})
+  go(5);
+  if(j&&j.pending){
+   // La lampe applique a chaud et garde son reseau : on suit le verdict en
+   // direct (WiFi puis compte Dexcom) au lieu d'attendre un redemarrage.
+   S.pending=1;S.psince=Date.now();
+   $('okTx').textContent='Connexion au réseau WiFi…';
+   clearInterval(S.pi);S.pi=setInterval(status,3000);status();
+   setTimeout(function(){clearInterval(S.pi);S.pending=0},150000)}
+  else{
+   toast('Réglages enregistrés — redémarrage');
+   [6,11,17,25,40].forEach(function(s){setTimeout(status,s*1000)})}})
+ .catch(function(e){
+  sb.textContent=lab;sb.disabled=0;lamp('er');
+  if(e&&e.err=='dexcom'){toast('Identifiants Dexcom refusés — vérifie l\'email et le mot de passe',1);go(3);$('dpw').value='';$('dpw').focus()}
+  else if(e&&e.err=='seuils')toast('Seuils incohérents : hypo < hyper < gyrophare',1);
+  else if(e&&e.err=='flash')toast('Écriture en mémoire impossible',1);
+  else toast('Échec de l\'enregistrement',1)})
 }
 load();status();setInterval(status,15000);
 </script>

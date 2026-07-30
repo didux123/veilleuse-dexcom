@@ -102,8 +102,13 @@ local qui renvoie des JSON figés sur les 4 endpoints.
 Chaque lampe consulte les [GitHub Releases](https://github.com/didux123/veilleuse-dexcom/releases)
 du projet et s'installe la nouvelle version toute seule :
 
-- **Quand** : après le premier relevé réussi au démarrage, puis chaque nuit
-  vers 4 h (la minute dépend du chipid, ce qui étale les téléchargements).
+- **Quand** : dès le premier relevé réussi après le démarrage — et si la
+  vérification est reportée (page consultée, alerte en cours, RAM basse) elle
+  est retentée à chaque relevé suivant. En pratique une lampe récupère une
+  nouvelle version **une à deux minutes après son démarrage** (mesuré). Le
+  rendez-vous quotidien vers 4 h (minute = `chipid % 60`, ce qui étale les
+  téléchargements d'un parc) ne sert donc qu'aux lampes allumées depuis
+  longtemps.
 - **Quoi** : n'installe que des versions **strictement plus récentes**
   (comparaison sémantique `X.Y.Z`). ⚠️ Une simple inégalité serait tentante
   pour permettre les retours en arrière, mais elle **rétrograde** toute lampe
@@ -156,6 +161,30 @@ lampe** (canari) puis publie la release. Incrémenter `FW_VERSION` dans
 Pour tester la chaîne d'auto-update sans exposer le parc : publier une
 **prerelease** (invisible de `latest`) et flasher une lampe de test avec
 l'environnement `d1_mini_testupd`.
+
+## Vérification des identifiants Dexcom
+
+Une faute de frappe dans le mot de passe Dexcom doit se voir **tout de suite**,
+pas après un redémarrage. Deux situations :
+
+- **La lampe a déjà du réseau** (page de réglages) : `POST /api/save` teste le
+  couple email/mot de passe auprès de Dexcom *avant* d'enregistrer (~1,5 s) et
+  répond `400 {"err":"dexcom"}` en cas de refus. Rien n'est écrit, rien ne
+  redémarre, la page ramène l'utilisateur sur l'écran du compte.
+- **Première configuration par le portail captif** : la lampe n'a aucun accès
+  Internet, elle ne peut rien vérifier. Elle **n'redémarre donc pas** — un
+  reboot ferait disparaître son réseau 15 s, le téléphone partirait voir
+  ailleurs et l'utilisateur n'apprendrait jamais son erreur. À la place elle
+  répond `{"ok":true,"pending":true}`, garde son point d'accès et se connecte
+  au WiFi à chaud ; la page interroge `/api/status` toutes les 3 s et affiche
+  le verdict réel (`wifi` et `pending` sont là pour ça) : « Connexion au
+  WiFi… », « Réseau introuvable ou mot de passe incorrect », « Identifiants
+  Dexcom refusés », ou la glycémie. Ce n'est qu'une fois la réussite constatée
+  que la lampe redémarre, 10 s plus tard — le temps de laisser lire l'adresse.
+
+Un seul essai d'authentification par action humaine, dans tous les cas : la
+règle anti-verrouillage du compte Dexcom n'est pas assouplie. Et si les
+identifiants n'ont pas changé, aucune vérification n'est envoyée.
 
 ## Réinitialisation
 
