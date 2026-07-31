@@ -56,9 +56,22 @@
 
 #define WIFI_LIST_MAX  10                   // nb max de reseaux memorises
 
+// ----- Portail loin de chez soi -----
+// Canal fixe et non chevauchant : quand la lampe change de lieu, le canal du
+// dernier reseau frequente n'a plus aucun sens.
+#define AP_CHANNEL     6
+#define STA_RETRY_MS   180000UL   // 3 min entre deux recherches de reseau
+#define STA_WINDOW_MS  15000UL    // duree d'une recherche
+// Trois coupures de courant rapprochees forcent le portail : seule porte de
+// secours quand la lampe est chez quelqu'un d'autre et refuse de cooperer.
+#define BOOTCNT_PATH   "/boot.cnt"
+#define BOOT_FORCE_N   3
+#define BOOT_FORCE_MS  600000UL   // portail force pendant 10 min
+#define BOOT_SETTLE_MS 8000UL     // au-dela, le demarrage est "reussi"
+
 // ------------------- Version / mise a jour -------------------
 // FW_VERSION est la source de verite, lue par scripts/release.sh.
-#define FW_VERSION     "1.2.3"
+#define FW_VERSION     "1.2.4"
 
 #ifndef UPDATE_BASE_URL                     // surchargeable par build_flags
 #define UPDATE_BASE_URL "https://github.com/didux123/veilleuse-dexcom/releases/latest/download"
@@ -120,6 +133,13 @@ static unsigned long gPendingSince = 0;
 static unsigned long gLastHttpAt   = 0;      // derniere requete servie
 static unsigned long wifiRetryAt   = 0;
 static bool          gConnecting   = false;  // wifiMulti.run() en cours
+// Radio dediee au portail (voir portalStart) et fenetres de recherche d'un
+// reseau connu quand la lampe est loin de chez elle.
+static bool          gApOnly       = false;
+static bool          gStaTrying    = false;
+static unsigned long gStaTryUntil  = 0;
+static unsigned long gNextStaTry   = 0;
+static unsigned long gForceUntil   = 0;      // portail force (3 coupures)
 static int           gKnownWifi    = 0;
 static String        gScanJson;              // dernier scan pre-serialise
 static unsigned long gScanDoneAt   = 0;
@@ -341,20 +361,31 @@ static void rememberWifi(const String& ssid, const String& pass) {
   logf("[wifi] reseau memorise : %s (%d en liste)\n", ssid.c_str(), count);
 }
 
+// Ce reseau fait-il partie des memorises ? (son mot de passe peut etre vide :
+// reseau ouvert, d'ou le booleen distinct de la chaine retournee)
+static bool knownWifi(const String& ssid, String& pwOut) {
+  File f = LittleFS.open("/wifis.txt", "r");
+  if (!f) return false;
+  while (f.available()) {
+    String line = f.readStringUntil('\n');
+    line.replace("\r", "");
+    int tab = line.indexOf('\t');
+    if (tab <= 0) continue;
+    if (line.substring(0, tab) == ssid) {
+      pwOut = line.substring(tab + 1);
+      f.close();
+      return true;
+    }
+  }
+  f.close();
+  return false;
+}
+
 // Mot de passe deja connu pour ce SSID ("" si inconnu). Sert au cas
 // "l'utilisateur enregistre sans retaper le mot de passe du WiFi".
 static String lookupWifiPass(const String& ssid) {
-  File f = LittleFS.open("/wifis.txt", "r");
-  if (f) {
-    while (f.available()) {
-      String line = f.readStringUntil('\n');
-      line.replace("\r", "");
-      int tab = line.indexOf('\t');
-      if (tab <= 0) continue;
-      if (line.substring(0, tab) == ssid) { f.close(); return line.substring(tab + 1); }
-    }
-    f.close();
-  }
+  String pw;
+  if (knownWifi(ssid, pw)) return pw;
   if (WiFi.isConnected() && WiFi.SSID() == ssid) return WiFi.psk();
   return "";
 }
@@ -731,11 +762,36 @@ static void buildScanJson(int n) {
   WiFi.scanDelete();      // ~110 o par reseau : liberer tout de suite
 }
 
+// Cherche le meilleur reseau memorise parmi les resultats et lance la
+// connexion. WiFi.begin() rend la main immediatement : rien ne se fige.
+static bool tryKnownFromScan(int n) {
+  int best = -1;
+  String bestPw;
+  for (int i = 0; i < n; i++) {
+    String s = WiFi.SSID(i);
+    if (s.length() == 0) continue;
+    String pw;
+    if (!knownWifi(s, pw)) continue;
+    if (best < 0 || WiFi.RSSI(i) > WiFi.RSSI(best)) { best = i; bestPw = pw; }
+  }
+  if (best < 0) return false;
+  logf("[wifi] reseau connu en vue : %s (%d dBm)\n",
+       WiFi.SSID(best).c_str(), (int)WiFi.RSSI(best));
+  WiFi.begin(WiFi.SSID(best).c_str(), bestPw.length() ? bestPw.c_str() : nullptr);
+  return true;
+}
+
 static void pollScan() {
   int n = WiFi.scanComplete();
   if (n < 0) return;                    // -1 en cours, -2 non declenche
+  // Pendant une fenetre de recherche, on exploite le scan avant de le liberer.
+  if (gStaTrying && WiFi.status() != WL_CONNECTED) tryKnownFromScan(n);
   buildScanJson(n);
   gScanDoneAt = millis();
+  // Un scan rallume toujours la station (le SDK force enableSTA). En radio
+  // dediee, il faut la recouper aussitot, sinon le point d'acces se remet a
+  // partager l'antenne — ce qu'on cherche precisement a eviter.
+  if (gApOnly && !gStaTrying && (WiFi.getMode() & WIFI_STA)) WiFi.mode(WIFI_AP);
   logf("[scan] %d reseaux, json %u o\n", n, (unsigned)gScanJson.length());
 }
 
@@ -948,6 +1004,9 @@ static void handleDiag() {
   jsonI(o, "rssi", WiFi.RSSI());
   jsonS(o, "ip", WiFi.localIP().toString());
   jsonB(o, "portal", gPortal);
+  jsonB(o, "aponly", gApOnly);        // radio dediee au portail
+  jsonB(o, "statry", gStaTrying);     // fenetre de recherche en cours
+  jsonB(o, "forced", gPortalForced);
   jsonI(o, "apclients", WiFi.softAPgetStationNum());
   jsonI(o, "wifis", gKnownWifi);
   jsonI(o, "cfgver", CFG_VER);
@@ -1038,14 +1097,38 @@ static bool portalNeeded() {
 
 static void portalStart() {
   if (gPortal) return;
-  WiFi.mode(WIFI_AP_STA);
-  // 3e argument = canal : en AP_STA le SDK aligne l'AP sur le canal de la STA
-  // des qu'elle se connecte ; le passer d'emblee evite d'ejecter les clients
-  // du portail. Mot de passe nullptr = reseau ouvert (obligatoire pour que la
-  // detection captive s'ouvre sans friction ; un psk de 1 a 7 caracteres
-  // ferait echouer softAP() en silence).
-  int ch = WiFi.channel();
-  if (ch < 1 || ch > 13) ch = 1;
+  // Deux situations tres differentes.
+  //
+  // La lampe a du reseau (identifiants Dexcom a corriger, par exemple) : on
+  // garde la station, la page reste jointe sur le reseau local, et l'AP est
+  // aligne sur le canal de la station pour ne pas ejecter les clients.
+  //
+  // La lampe n'a PAS de reseau (elle a change de lieu) : on DEDIE la radio au
+  // portail. Sinon la station continue de chercher son reseau habituel et,
+  // l'ESP8266 n'ayant qu'une seule radio, le point d'acces cesse d'emettre ses
+  // balises : il devient introuvable depuis un telephone. Constate en vrai —
+  // lampe emmenee ailleurs, LED violette (portail actif cote logiciel) mais
+  // aucun reseau visible, donc impossible a reconfigurer.
+  bool keepSta = WiFi.isConnected();
+  int ch;
+  if (keepSta) {
+    WiFi.mode(WIFI_AP_STA);
+    gApOnly = false;
+    ch = WiFi.channel();
+    if (ch < 1 || ch > 13) ch = AP_CHANNEL;
+  } else {
+    WiFi.setAutoReconnect(false);      // stoppe la chasse au reseau absent
+    WiFi.disconnect(false, false);     // 2e argument : NE PAS effacer les
+                                       // identifiants memorises par le SDK
+    WiFi.mode(WIFI_AP);
+    gApOnly = true;
+    gStaTrying = false;
+    gNextStaTry = millis() + STA_RETRY_MS;
+    ch = AP_CHANNEL;                   // le canal du dernier lieu n'a plus de sens
+  }
+  // Mot de passe nullptr = reseau ouvert (obligatoire pour que la detection
+  // captive s'ouvre sans friction ; un psk de 1 a 7 caracteres ferait echouer
+  // softAP() en silence).
   if (!WiFi.softAP(gApName, (const char*)nullptr, ch, false, 4)) {
     logf("[ap] ECHEC softAP\n");
     return;
@@ -1055,8 +1138,9 @@ static void portalStart() {
   gPortal = true;
   gScanJson = "";                          // resultats perimes
   if (canScanNow()) WiFi.scanNetworks(true, false);   // pre-chauffe la liste
-  logf("[ap] portail ouvert : %s canal %d ip %s\n",
-       gApName, ch, WiFi.softAPIP().toString().c_str());
+  logf("[ap] portail ouvert : %s canal %d ip %s (radio %s)\n",
+       gApName, ch, WiFi.softAPIP().toString().c_str(),
+       gApOnly ? "dediee" : "partagee");
 }
 
 static void portalStop() {
@@ -1064,8 +1148,49 @@ static void portalStop() {
   dns.stop();
   WiFi.softAPdisconnect(true);   // n'affecte pas la STA
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);   // retablit la reconnexion automatique
   gPortal = false;
+  gApOnly = false;
+  gStaTrying = false;
   logf("[ap] portail ferme\n");
+}
+
+// En radio dediee, la lampe ne cherche plus rien : il lui faut des fenetres
+// pour retrouver un reseau connu (retour a la maison, ou reseau reconfigure).
+// Jamais pendant que quelqu'un est sur le portail : le scan couperait l'AP.
+static void staRetryTick() {
+  if (!gPortal || !gApOnly) return;
+
+  if (gStaTrying) {
+    if (WiFi.status() == WL_CONNECTED) {
+      logf("[wifi] reseau retrouve : %s\n", WiFi.SSID().c_str());
+      gStaTrying = false;
+      gApOnly = false;
+      WiFi.setAutoReconnect(true);
+      return;                    // portalTick fermera le portail s'il le faut
+    }
+    if ((long)(millis() - gStaTryUntil) >= 0) {
+      logf("[wifi] aucun reseau connu, radio rendue au portail\n");
+      WiFi.disconnect(false, false);
+      WiFi.mode(WIFI_AP);
+      gStaTrying = false;
+      gNextStaTry = millis() + STA_RETRY_MS;
+    }
+    return;
+  }
+
+  if (WiFi.softAPgetStationNum() > 0) {   // quelqu'un configure : on patiente
+    gNextStaTry = millis() + STA_RETRY_MS;
+    return;
+  }
+  if ((long)(millis() - gNextStaTry) < 0) return;
+  if (gKnownWifi == 0) { gNextStaTry = millis() + STA_RETRY_MS; return; }
+
+  logf("[wifi] fenetre de recherche d'un reseau connu\n");
+  WiFi.mode(WIFI_AP_STA);
+  gStaTrying = true;
+  gStaTryUntil = millis() + STA_WINDOW_MS;
+  WiFi.scanNetworks(true, false);         // asynchrone : ne fige pas la boucle
 }
 
 // Seul endroit qui leve ou baisse l'AP.
@@ -1090,9 +1215,9 @@ static void wifiTick() {
 
   if (connected || (long)(millis() - wifiRetryAt) < 0) return;
   wifiRetryAt = millis() + 240000UL;
-  // wifiMulti.run() fait un scan synchrone : il fige loop() et couperait
-  // l'AP en pleine configuration. On s'abstient si quelqu'un est dessus.
-  if (WiFi.softAPgetStationNum() > 0) return;
+  // Quand le portail est ouvert, c'est staRetryTick() qui gere les tentatives,
+  // en asynchrone : surtout ne pas lancer ici un scan bloquant par-dessus.
+  if (gPortal) return;
   if (gKnownWifi == 0) return;
   gConnecting = true;
   logf("[wifi] reconnexion aux reseaux connus...\n");
@@ -1247,6 +1372,20 @@ void setup() {
     logf("[upd] mise a jour vers %s confirmee\n", FW_VERSION);
   }
 
+  // Porte de secours : trois coupures de courant rapprochees ouvrent le
+  // portail quoi qu'il arrive. C'est le seul recours quand la lampe est chez
+  // quelqu'un d'autre et refuse de se montrer.
+  int bootCnt = readLineFile(BOOTCNT_PATH).toInt() + 1;
+  if (bootCnt >= BOOT_FORCE_N) {
+    writeLineFile(BOOTCNT_PATH, "0");
+    gPortalForced = true;
+    gForceUntil = millis() + BOOT_FORCE_MS;
+    logf("[sys] %d demarrages rapproches -> portail force %lu min\n",
+         bootCnt, BOOT_FORCE_MS / 60000UL);
+  } else {
+    writeLineFile(BOOTCNT_PATH, String(bootCnt));
+  }
+
   if (loadConfig()) {
     logf("[cfg] config chargee (region %s)\n", gCfg.regionUS ? "us" : "ous");
     if (gCfgMigrated) { saveConfig(); logf("[cfg] migre v1 -> v2 (horaires en minutes)\n"); }
@@ -1355,7 +1494,21 @@ void loop() {
 
   pollScan();
   wifiTick();
+  staRetryTick();
   portalTick();
+
+  // Trois coupures rapprochees = demande de portail. Passe ce delai, le
+  // demarrage est considere reussi et le compteur repart de zero.
+  static bool bootCntCleared = false;
+  if (!bootCntCleared && millis() > BOOT_SETTLE_MS) {
+    bootCntCleared = true;
+    writeLineFile(BOOTCNT_PATH, "0");
+  }
+  if (gForceUntil && (long)(millis() - gForceUntil) >= 0) {
+    gForceUntil = 0;
+    gPortalForced = false;
+    logf("[sys] fin du portail force\n");
+  }
 
   // Verdict d'une configuration appliquee a chaud. On ne redemarre qu'une fois
   // la reussite constatee (WiFi + une vraie mesure), et avec du retard pour

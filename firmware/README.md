@@ -186,6 +186,47 @@ Un seul essai d'authentification par action humaine, dans tous les cas : la
 règle anti-verrouillage du compte Dexcom n'est pas assouplie. Et si les
 identifiants n'ont pas changé, aucune vérification n'est envoyée.
 
+## Emmener la lampe ailleurs (portail sans réseau connu)
+
+Cas réel : une lampe configurée à la maison, emmenée chez quelqu'un d'autre.
+Le réseau habituel est absent, la lampe passe bien en violet — mais **son
+point d'accès restait introuvable**, donc impossible de la reconfigurer.
+
+Cause : l'ESP8266 n'a **qu'une seule radio**. Avec `setAutoReconnect(true)` et
+des identifiants mémorisés, la station cherche son réseau habituel en
+permanence, en balayant les canaux ; pendant ce temps le point d'accès
+n'émet plus ses balises et n'apparaît dans aucun téléphone.
+
+Correctif : quand le portail s'ouvre **faute de réseau**, la radio lui est
+**dédiée** — `setAutoReconnect(false)`, `WiFi.disconnect(false, false)` puis
+`WiFi.mode(WIFI_AP)`, sur un canal fixe (le canal du lieu précédent n'a plus
+de sens). ⚠️ La surcharge à un seul argument `WiFi.disconnect(false)` **efface
+les identifiants mémorisés** : il faut impérativement la forme à deux
+arguments.
+
+Comme la lampe ne cherche alors plus rien, `staRetryTick()` lui ménage une
+**fenêtre de recherche de 15 s toutes les 3 minutes**, jamais pendant que
+quelqu'un est connecté au portail. Le scan y est **asynchrone** puis suivi
+d'un `WiFi.begin()` ciblé : rien ne fige, contrairement à `wifiMulti.run()`.
+Un scan réactive toujours la station (le SDK force `enableSTA`) — `pollScan()`
+la recoupe donc aussitôt en radio dédiée.
+
+Quand la lampe a du réseau (identifiants Dexcom à corriger), le portail garde
+au contraire la station : la page reste jointe sur le réseau local.
+
+Mesuré après correctif, avec un réseau connu mais absent : point d'accès
+visible sur **12 relevés consécutifs en 4 min 40**, toujours sur son canal,
+fenêtres de recherche comprises.
+
+## Porte de secours : trois coupures
+
+**Débrancher et rebrancher trois fois de suite** (moins de 8 s entre chaque)
+force l'ouverture du portail pendant 10 minutes, quel que soit l'état de la
+lampe. C'est le dernier recours quand elle est chez quelqu'un d'autre et
+refuse de se montrer. Le compteur est dans `/boot.cnt` et se remet à zéro dès
+que la lampe tourne plus de 8 secondes : un redémarrage isolé ne déclenche
+rien.
+
 ## Réinitialisation
 
 Le bouton « Réinitialiser la lampe… » de la page (section Maintenance) demande
