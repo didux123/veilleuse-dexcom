@@ -20,6 +20,7 @@ et en pleine nuit, pour connaître son état — sans sortir le téléphone.
 |---|---|---|
 | **Veilleuse ESP8266** | [`firmware/`](firmware/) | La lampe : autonome, parle directement à l'API Dexcom Share en HTTPS, pilote un anneau de LED adressables. Aucun serveur requis. |
 | **Boîtier 3D** | [`hardware/`](hardware/) | STL prêts à imprimer + scripts Fusion 360 paramétriques (berceau à clips pour la carte, diffuseur à baïonnette). |
+| **Landing page** | [`landing/`](landing/) | Site vitrine « Halo » (HTML statique, démo des 8 états) et direction artistique. Sans effet sur le firmware ni sur les mises à jour OTA. |
 | **Dashboard web** (bonus) | branche [`web-dashboard`](https://github.com/didux123/veilleuse-dexcom/tree/web-dashboard) | Petit serveur Node/Express qui affiche la glycémie et son historique 24 h dans le navigateur. Indépendant de la lampe. |
 
 ## La veilleuse
