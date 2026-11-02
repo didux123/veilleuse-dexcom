@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veilleuse Dexcom — Direction artistique</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #0B0C10; }
+  a { color: #FFA23A; text-decoration: none; border-bottom: 2px solid rgba(255,162,58,.35); }
+  a:hover { color: #45E07F; border-bottom-color: rgba(69,224,127,.5); }
+  ::selection { background: #FFA23A; color: #0B0C10; }
+  @keyframes vBreathe { 0%,100% { opacity: .10 } 50% { opacity: 1 } }
+  @keyframes vHypo { 0% { opacity: 0 } 8% { opacity: .15 } 40% { opacity: 1 } 100% { opacity: 0 } }
+  @keyframes vHypoHalo { 0% { opacity: .05; transform: scale(.86) } 40% { opacity: .55; transform: scale(1.12) } 100% { opacity: .05; transform: scale(.86) } }
+  @keyframes vSpin { to { transform: rotate(360deg) } }
+  @keyframes vSwap { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+  @keyframes vSwapB { 0%,49% { opacity: 0 } 50%,100% { opacity: 1 } }
+  @keyframes vGlow { 0%,100% { opacity: .18 } 50% { opacity: .30 } }
+  @keyframes vBar { 0% { width: 8% } 100% { width: 92% } }
+  @keyframes vToast { 0% { opacity: 0; transform: translateY(14px) scale(.96) } 100% { opacity: 1; transform: none } }
+  @keyframes vSiren { 0%,100% { box-shadow: 0 0 0 0 rgba(255,31,51,.55) } 50% { box-shadow: 0 0 0 14px rgba(255,31,51,0) } }
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><clipPath id="domeClip"><path d="M44 112 V92 C44 56 156 56 156 92 V112 Z"></path></clipPath></defs></svg>
+
+<div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0B0C10; color: #EDEAE3; -webkit-font-smoothing: antialiased; padding: 0 0 120px">
+
+  <header style="max-width: 1180px; margin: 0 auto; padding: 72px 28px 48px; display: grid; gap: 28px">
+    <div style="display: flex; align-items: center; gap: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #9AA1B1">
+      <span style="width: 12px; height: 12px; border-radius: 999px; background: #45E07F; box-shadow: 0 0 14px 4px rgba(69,224,127,.55)"></span>
+      <span>Direction artistique · v1</span>
+      <span style="color: #4A5160">/</span>
+      <span>objet + page embarquée</span>
+    </div>
+    <h1 style="margin: 0; font-size: clamp(40px, 7vw, 82px); line-height: .95; font-weight: 800; letter-spacing: -.03em; max-width: 16em; text-wrap: balance">Une veilleuse qui dit la glycémie<br><span style="color: #FFA23A">en couleur</span>, pas en chiffres.</h1>
+    <p style="margin: 0; max-width: 58ch; font-size: 19px; line-height: 1.55; color: #B9BFCC; text-wrap: pretty">Cylindre Ø80 × 72 mm, PLA noir mat + dôme blanc translucide, 12 LED RGB, ESP8266. Un galet posé sur une table de nuit — objet‑compagnon, pas moniteur de santé. Cette page pose la DA : les 8 états lumineux, les tokens, le kit, la page de config et une piste vitrine.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px">
+      <span style="padding: 9px 14px; border-radius: 999px; background: #171A22; border: 2px solid #2A2F3B; color: #B9BFCC">1 fichier HTML</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: #171A22; border: 2px solid #2A2F3B; color: #B9BFCC">~20 Ko en PROGMEM</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: #171A22; border: 2px solid #2A2F3B; color: #B9BFCC">0 requête externe</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: #171A22; border: 2px solid #2A2F3B; color: #B9BFCC">mobile · nuit d'abord</span>
+    </div>
+  </header>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 40px 28px 0">
+    <div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-top: 3px solid #2A2F3B; padding-top: 22px; margin-bottom: 8px">
+      <h2 style="margin: 0; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">01 — Les huit états</h2>
+      <p style="margin: 0; color: #9AA1B1; font-size: 15px">Le SVG est unique ; seules la couleur et le mouvement changent.</p>
+    </div>
+    <p data-why="1" style="margin: 0 0 34px; max-width: 66ch; font-size: 15px; line-height: 1.6; color: #6F7788; font-style: italic">Pourquoi : la gravité passe par le <strong style="color: #B9BFCC; font-style: normal">mouvement</strong> autant que par la teinte — fixe = calme, respiration = attente, rotation = alerte, pulsation = urgence. Un dormeur à moitié réveillé lit un rythme avant de lire une couleur.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px">
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px; box-shadow: 0 18px 40px -24px rgba(69,224,127,.45)">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="64" ry="13" fill="#45E07F" opacity=".28" style="filter: blur(7px)"></ellipse>
+          <circle cx="100" cy="92" r="72" fill="#45E07F" opacity=".2" style="filter: blur(20px)"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#45E07F" opacity=".92"></rect></g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".38" style="filter: blur(4px)"></ellipse>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #45E07F"></span><strong style="font-size: 18px; letter-spacing: -.01em">Dans la plage</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">LED 0,36,5 · fixe · écran #45E07F</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">Tout va bien. Lumière immobile : rien à faire, rien à regarder.</p>
+        </div>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px; box-shadow: 0 18px 40px -24px rgba(255,162,58,.45)">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="64" ry="13" fill="#FFA23A" opacity=".28" style="filter: blur(7px)"></ellipse>
+          <circle cx="100" cy="92" r="72" fill="#FFA23A" opacity=".2" style="filter: blur(20px)"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#FFA23A" opacity=".92"></rect></g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".38" style="filter: blur(4px)"></ellipse>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #FFA23A"></span><strong style="font-size: 18px; letter-spacing: -.01em">Hyper &gt; 180</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">LED 66,18,0 · fixe · écran #FFA23A</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">À surveiller. Même immobilité que le vert : on informe, on ne réveille pas.</p>
+        </div>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px; box-shadow: 0 18px 40px -24px rgba(255,107,31,.5)">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="64" ry="13" fill="#FF6B1F" opacity=".3" style="filter: blur(7px)"></ellipse>
+          <circle cx="100" cy="92" r="72" fill="#FF6B1F" opacity=".22" style="filter: blur(20px)"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)">
+            <rect x="40" y="52" width="120" height="64" fill="#FF6B1F" opacity=".3"></rect>
+            <g style="animation: vSpin 1.6s linear infinite; transform-origin: 100px 100px">
+              <path d="M100 100 L100 34 A66 66 0 0 1 158 68 Z" fill="#FF6B1F"></path>
+            </g>
+          </g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".3" style="filter: blur(4px)"></ellipse>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #FF6B1F"></span><strong style="font-size: 18px; letter-spacing: -.01em">Hyper sévère &gt; 300</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">LED 140,38,0 · bloc de 6 qui tourne · 1,6 s</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">Gyrophare. On ajoute du mouvement, pas de la lumière : la chambre ne s'éclaire pas davantage.</p>
+        </div>
+      </div>
+
+      <div style="background: #1A0E12; border: 3px solid #FF1F33; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px; box-shadow: 0 20px 46px -20px rgba(255,31,51,.65); animation: vSiren 1.2s ease-out infinite">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="66" ry="14" fill="#FF1F33" opacity=".35" style="filter: blur(7px); animation: vHypo 1.2s ease-in-out infinite"></ellipse>
+          <circle cx="100" cy="92" r="80" fill="#FF1F33" opacity=".4" style="filter: blur(22px); animation: vHypoHalo 1.2s ease-in-out infinite; transform-origin: 100px 92px"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#FF1F33" style="animation: vHypo 1.2s ease-in-out infinite"></rect></g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: #FF1F33; color: #14000A; padding: 5px 11px; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 700; letter-spacing: .14em; width: fit-content">HYPO &lt; 70</div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #C98A92; letter-spacing: .04em">LED 255,0,0 · pulsation 0→255 en 1,2 s · pleine puissance</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #F0D6D9">Urgence. Le dôme rond ne change pas — ce sont les <strong>coussins</strong> qui disparaissent : contraste au maximum, halo hors cadre, label en bloc plein, angles nets.</p>
+        </div>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="62" ry="12" fill="#F4F1EA" opacity=".16" style="filter: blur(7px)"></ellipse>
+          <circle cx="100" cy="92" r="70" fill="#F4F1EA" opacity=".12" style="filter: blur(20px)"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#F4F1EA" opacity=".72"></rect></g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".4" style="filter: blur(4px)"></ellipse>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #F4F1EA"></span><strong style="font-size: 18px; letter-spacing: -.01em">On ne sait pas</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">LED 30,30,30 · fixe · données périmées / réseau coupé</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">Blanc, jamais vert. Un silence ne doit pas ressembler à un « tout va bien ».</p>
+        </div>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px; box-shadow: 0 18px 40px -24px rgba(185,107,255,.45)">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="62" ry="12" fill="#B96BFF" opacity=".26" style="filter: blur(7px); animation: vBreathe 3s ease-in-out infinite"></ellipse>
+          <circle cx="100" cy="92" r="72" fill="#B96BFF" opacity=".24" style="filter: blur(20px); animation: vBreathe 3s ease-in-out infinite"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#B96BFF" style="animation: vBreathe 3s ease-in-out infinite"></rect></g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".34" style="filter: blur(4px)"></ellipse>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #B96BFF"></span><strong style="font-size: 18px; letter-spacing: -.01em">Mode configuration</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">LED 6,0,9 → 44,0,56 · respiration 3 s</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">L'objet attend. Le violet est hors du langage glycémie : impossible de le confondre avec une mesure.</p>
+        </div>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="62" ry="12" fill="#B96BFF" opacity=".24" style="filter: blur(7px)"></ellipse>
+          <circle cx="100" cy="92" r="72" fill="#B96BFF" opacity=".2" style="filter: blur(20px); animation: vSwap .6s steps(1, end) infinite"></circle>
+          <circle cx="100" cy="92" r="72" fill="#FF1F33" opacity=".22" style="filter: blur(20px); animation: vSwapB .6s steps(1, end) infinite"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)">
+            <rect x="40" y="52" width="120" height="64" fill="#B96BFF" style="animation: vSwap .6s steps(1, end) infinite"></rect>
+            <rect x="40" y="52" width="120" height="64" fill="#FF1F33" style="animation: vSwapB .6s steps(1, end) infinite"></rect>
+          </g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #B96BFF"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #FF1F33"></span><strong style="font-size: 18px; letter-spacing: -.01em">Identifiants refusés</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">violet ⇄ rouge · 600 ms · sans fondu</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">Erreur à corriger au portail. Alternance dure, jamais de fondu : c'est une panne, pas une mesure.</p>
+        </div>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 20px 20px 22px; display: grid; gap: 14px; box-shadow: 0 18px 40px -24px rgba(76,140,255,.45)">
+        <div style="padding: 6px 6px 0"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible">
+          <ellipse cx="100" cy="166" rx="62" ry="12" fill="#4C8CFF" opacity=".26" style="filter: blur(7px)"></ellipse>
+          <circle cx="100" cy="92" r="70" fill="#4C8CFF" opacity=".2" style="filter: blur(20px); animation: vGlow 2.4s ease-in-out infinite"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#domeClip)">
+            <rect x="40" y="52" width="120" height="64" fill="#4C8CFF" opacity=".14"></rect>
+            <g style="animation: vSpin 2.4s linear infinite; transform-origin: 100px 100px">
+              <circle cx="100" cy="46" r="15" fill="#4C8CFF"></circle>
+            </g>
+          </g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg></div>
+        <div style="display: grid; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #4C8CFF"></span><strong style="font-size: 18px; letter-spacing: -.01em">Démarrage / mise à jour</strong></div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .04em">LED 0,0,28 · point qui tourne, puis barre</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">Progression. Le bleu n'existe nulle part ailleurs : c'est la couleur de la machine, pas du corps.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top: 22px; background: #14161D; border: 3px solid #2A2F3B; border-left: 10px solid #FF1F33; border-radius: 22px; padding: 22px 24px; display: grid; gap: 10px">
+      <strong style="font-size: 17px">La bascule cartoon → alerte, sans changer d'univers</strong>
+      <p style="margin: 0; max-width: 82ch; font-size: 15px; line-height: 1.6; color: #B9BFCC; text-wrap: pretty">Le vocabulaire reste identique — même galet, mêmes contours épais, mêmes rondeurs. Ce qui change en hypo, ce sont les <strong style="color: #EDEAE3">amortisseurs</strong> : le halo diffus devient une pulsation qui sort du cadre, le contraste passe de doux à maximal, l'étiquette abandonne la pastille discrète pour un bloc plein rouge, et le rythme de 1,2 s est deux fois plus rapide que tout le reste de la DA. Résultat : rien de « mignon » n'adoucit le signal, et pourtant on est toujours dans le même monde graphique.</p>
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 72px 28px 0">
+    <div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-top: 3px solid #2A2F3B; padding-top: 22px; margin-bottom: 8px">
+      <h2 style="margin: 0; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">02 — Tokens</h2>
+      <p style="margin: 0; color: #9AA1B1; font-size: 15px">Teintes dérivées des RGB réels des LED, remontées en luminosité écran.</p>
+    </div>
+    <p data-why="1" style="margin: 0 0 30px; max-width: 66ch; font-size: 15px; line-height: 1.6; color: #6F7788; font-style: italic">Pourquoi : la teinte est la source de vérité, la luminosité est un problème de média. On garde le hue du firmware et on remonte L et C pour rester lisible et accessible sur écran.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 26px">
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #45E07F"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-ok</div>#45E07F<br><span style="color: #6F7788">← 0,36,5</span></div>
+      </div>
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #FFA23A"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-high</div>#FFA23A<br><span style="color: #6F7788">← 66,18,0</span></div>
+      </div>
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #FF6B1F"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-high-sev</div>#FF6B1F<br><span style="color: #6F7788">← 140,38,0</span></div>
+      </div>
+      <div style="border: 3px solid #FF1F33; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #FF1F33"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-low</div>#FF1F33<br><span style="color: #6F7788">← 255,0,0</span></div>
+      </div>
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #F4F1EA"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-unknown</div>#F4F1EA<br><span style="color: #6F7788">← 30,30,30</span></div>
+      </div>
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #B96BFF"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-setup</div>#B96BFF<br><span style="color: #6F7788">← 44,0,56</span></div>
+      </div>
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: #4C8CFF"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">--v-boot</div>#4C8CFF<br><span style="color: #6F7788">← 0,0,28</span></div>
+      </div>
+      <div style="border: 3px solid #2A2F3B; border-radius: 20px; overflow: hidden; background: #14161D">
+        <div style="height: 74px; background: linear-gradient(90deg, #0B0C10 0 25%, #14161D 25% 50%, #1F232D 50% 75%, #2A2F3B 75%)"></div>
+        <div style="padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.7; color: #9AA1B1"><div style="color: #EDEAE3">surfaces</div>900 → 600<br><span style="color: #6F7788">+ --v-line</span></div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; align-items: start">
+      <pre style="margin: 0; background: #101219; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.85; color: #C7CDDA">:root{
+<span style="color: #6F7788">/* états — hue du firmware, L/C écran */</span>
+--v-ok:#45E07F; --v-high:#FFA23A;
+--v-high-sev:#FF6B1F; --v-low:#FF1F33;
+--v-unknown:#F4F1EA; --v-setup:#B96BFF;
+--v-boot:#4C8CFF;
+<span style="color: #6F7788">/* surfaces & encre */</span>
+--v-900:#0B0C10; --v-800:#14161D;
+--v-700:#1F232D; --v-600:#2A2F3B;
+--v-line:#2A2F3B; --v-stroke:#07080B;
+--v-ink:#EDEAE3; --v-ink-2:#B9BFCC;
+--v-ink-3:#6F7788;
+<span style="color: #6F7788">/* type — stack système, 0 Ko */</span>
+--v-sans:system-ui,-apple-system,
+  "Segoe UI",Roboto,Helvetica,sans-serif;
+--v-mono:ui-monospace,SFMono-Regular,
+  Menlo,Consolas,monospace;
+--t-xs:12px; --t-sm:14px; --t-md:16px;
+--t-lg:19px; --t-xl:26px; --t-2xl:34px;
+<span style="color: #6F7788">/* rayons — pleins, jamais pointus */</span>
+--r-sm:10px; --r-md:16px;
+--r-lg:22px; --r-pill:999px;
+<span style="color: #6F7788">/* ombres colorées, jamais grises */</span>
+--sh-soft:0 14px 30px -18px
+  color-mix(in oklab,var(--v-ok) 60%,#000);
+--sh-alert:0 18px 40px -16px
+  color-mix(in oklab,var(--v-low) 70%,#000);
+<span style="color: #6F7788">/* durées = sémantique */</span>
+--d-tap:140ms; --d-calm:240ms;
+--d-breathe:3s; --d-spin:1.6s;
+--d-urgent:1.2s; --d-reject:600ms;
+--e-pop:cubic-bezier(.34,1.56,.64,1);
+--e-calm:cubic-bezier(.4,0,.2,1);
+}</pre>
+      <div style="display: grid; gap: 14px">
+        <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 10px">
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #FFA23A">Échelle typo · stack système</div>
+          <div style="font-size: 34px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1">Titre 34 / 800</div>
+          <div style="font-size: 26px; font-weight: 700; letter-spacing: -.02em">Sous‑titre 26 / 700</div>
+          <div style="font-size: 19px; font-weight: 600">Libellé de champ 19 / 600</div>
+          <div style="font-size: 16px; color: #B9BFCC; line-height: 1.55">Corps 16 / 400 — la taille minimale d'un champ tapé d'une main, le soir, à 40 cm.</div>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #9AA1B1">Mono 12 · valeurs & états</div>
+          <p data-why="1" style="margin: 4px 0 0; font-size: 14px; color: #6F7788; font-style: italic; line-height: 1.55">Pourquoi deux familles seulement : la mono porte tout ce qui est chiffre, seuil ou code réseau — l'œil sait où chercher une valeur. Et une stack système coûte 0 Ko sur les 20 Ko.</p>
+        </div>
+        <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 14px">
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #FFA23A">Rayons & ombres</div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap">
+            <div style="width: 76px; height: 62px; border-radius: 10px; background: #1F232D; border: 3px solid #2A2F3B; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">10</div>
+            <div style="width: 76px; height: 62px; border-radius: 16px; background: #1F232D; border: 3px solid #2A2F3B; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">16</div>
+            <div style="width: 76px; height: 62px; border-radius: 22px; background: #1F232D; border: 3px solid #2A2F3B; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">22</div>
+            <div style="width: 76px; height: 62px; border-radius: 999px; background: #1F232D; border: 3px solid #2A2F3B; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">pill</div>
+          </div>
+          <div style="display: flex; gap: 14px; flex-wrap: wrap">
+            <div style="flex: 1; min-width: 120px; height: 56px; border-radius: 16px; background: #1F232D; box-shadow: 0 14px 30px -18px rgba(69,224,127,.9); display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">--sh-soft</div>
+            <div style="flex: 1; min-width: 120px; height: 56px; border-radius: 16px; background: #1F232D; box-shadow: 0 18px 40px -16px rgba(255,31,51,.9); display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">--sh-alert</div>
+          </div>
+          <p data-why="1" style="margin: 0; font-size: 14px; color: #6F7788; font-style: italic; line-height: 1.55">Pourquoi : les ombres sont teintées de l'état, jamais grises — c'est ce qui garde le registre « lumière dans une chambre » au lieu de « carte d'interface ».</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 72px 28px 0">
+    <div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-top: 3px solid #2A2F3B; padding-top: 22px; margin-bottom: 30px">
+      <h2 style="margin: 0; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">03 — Kit de composants</h2>
+      <p style="margin: 0; color: #9AA1B1; font-size: 15px">Cibles ≥ 52 px, contours 3 px, tout en CSS pur.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px">
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 16px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788">Champ texte · mot de passe</div>
+        <label style="display: grid; gap: 8px; font-size: 15px; font-weight: 600">Email Dexcom
+          <input type="text" value="marion@exemple.fr" style="font-family: inherit; font-size: 16px; color: #EDEAE3; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 16px; padding: 15px 16px; min-height: 54px; box-sizing: border-box; outline: none" style-focus="border-color:#FFA23A;box-shadow:0 0 0 4px rgba(255,162,58,.18)">
+        </label>
+        <label style="display: grid; gap: 8px; font-size: 15px; font-weight: 600">Mot de passe
+          <span style="display: flex; align-items: center; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 16px; padding: 0 6px 0 16px; min-height: 54px" style-focus="border-color:#FFA23A">
+            <input type="password" value="motdepasse" style="flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 16px; letter-spacing: .18em; color: #EDEAE3; background: transparent; border: 0; outline: none; padding: 14px 0">
+            <button type="button" style="font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: .1em; color: #0B0C10; background: #B9BFCC; border: 0; border-radius: 11px; padding: 11px 12px; min-height: 42px; cursor: pointer" style-hover="background:#FFA23A">VOIR</button>
+          </span>
+        </label>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 16px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788">Steppers · seuils mg/dL</div>
+        <div style="display: grid; gap: 12px">
+          <div style="display: flex; align-items: center; gap: 12px; background: #0B0C10; border: 3px solid #FF1F33; border-radius: 16px; padding: 8px 8px 8px 16px">
+            <span style="flex: 1; display: grid; gap: 2px"><strong style="font-size: 15px">Hypo</strong><span style="font-family: ui-monospace, monospace; font-size: 11px; color: #C98A92">rouge pulsé</span></span>
+            <button type="button" style="width: 46px; height: 46px; border-radius: 13px; border: 0; background: #1F232D; color: #EDEAE3; font-size: 22px; line-height: 1; cursor: pointer" style-hover="background:#2A2F3B">−</button>
+            <span style="font-family: ui-monospace, monospace; font-size: 21px; font-weight: 700; min-width: 2.6em; text-align: center">70</span>
+            <button type="button" style="width: 46px; height: 46px; border-radius: 13px; border: 0; background: #FF1F33; color: #14000A; font-size: 22px; line-height: 1; cursor: pointer; font-weight: 700" style-hover="filter:brightness(1.12)">+</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 16px; padding: 8px 8px 8px 16px">
+            <span style="flex: 1; display: grid; gap: 2px"><strong style="font-size: 15px">Hyper</strong><span style="font-family: ui-monospace, monospace; font-size: 11px; color: #6F7788">orange fixe</span></span>
+            <button type="button" style="width: 46px; height: 46px; border-radius: 13px; border: 0; background: #1F232D; color: #EDEAE3; font-size: 22px; line-height: 1; cursor: pointer" style-hover="background:#2A2F3B">−</button>
+            <span style="font-family: ui-monospace, monospace; font-size: 21px; font-weight: 700; min-width: 2.6em; text-align: center">180</span>
+            <button type="button" style="width: 46px; height: 46px; border-radius: 13px; border: 0; background: #FFA23A; color: #201203; font-size: 22px; line-height: 1; cursor: pointer; font-weight: 700" style-hover="filter:brightness(1.12)">+</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 16px; padding: 8px 8px 8px 16px">
+            <span style="flex: 1; display: grid; gap: 2px"><strong style="font-size: 15px">Gyrophare</strong><span style="font-family: ui-monospace, monospace; font-size: 11px; color: #6F7788">bloc tournant</span></span>
+            <button type="button" style="width: 46px; height: 46px; border-radius: 13px; border: 0; background: #1F232D; color: #EDEAE3; font-size: 22px; line-height: 1; cursor: pointer" style-hover="background:#2A2F3B">−</button>
+            <span style="font-family: ui-monospace, monospace; font-size: 21px; font-weight: 700; min-width: 2.6em; text-align: center">300</span>
+            <button type="button" style="width: 46px; height: 46px; border-radius: 13px; border: 0; background: #FF6B1F; color: #200A02; font-size: 22px; line-height: 1; cursor: pointer; font-weight: 700" style-hover="filter:brightness(1.12)">+</button>
+          </div>
+        </div>
+        <p data-why="1" style="margin: 0; font-size: 14px; color: #6F7788; font-style: italic; line-height: 1.5">Pourquoi un stepper et pas un slider : on règle un seuil médical au chiffre exact, à moitié endormi. Le « + » porte la couleur de l'état qu'il gouverne.</p>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 16px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788">Bascule région · segmenté</div>
+        <div style="display: flex; gap: 6px; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 999px; padding: 6px">
+          <button type="button" style="flex: 1; min-height: 48px; border: 0; border-radius: 999px; background: #FFA23A; color: #201203; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Europe</button>
+          <button type="button" style="flex: 1; min-height: 48px; border: 0; border-radius: 999px; background: transparent; color: #B9BFCC; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer" style-hover="background:#1F232D">US</button>
+        </div>
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788; margin-top: 4px">Mode nuit · plage horaire</div>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="font-family: ui-monospace, monospace; font-size: 22px; font-weight: 700; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 14px; padding: 12px 16px">22:00</span>
+          <span style="flex: 1; height: 4px; border-radius: 999px; background: linear-gradient(90deg, #B96BFF, #2A2F3B)"></span>
+          <span style="font-family: ui-monospace, monospace; font-size: 22px; font-weight: 700; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 14px; padding: 12px 16px">07:00</span>
+        </div>
+        <label style="display: grid; gap: 10px; font-size: 15px; font-weight: 600">
+          <span style="display: flex; justify-content: space-between">Luminosité réduite <span style="font-family: ui-monospace, monospace; color: #FFA23A">22 %</span></span>
+          <span style="display: block; position: relative; height: 14px; border-radius: 999px; background: #0B0C10; border: 3px solid #2A2F3B">
+            <span style="position: absolute; inset: 0 auto 0 0; width: 22%; border-radius: 999px; background: #FFA23A"></span>
+            <span style="position: absolute; left: 22%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 999px; background: #EDEAE3; border: 3px solid #07080B; box-shadow: 0 6px 16px -6px rgba(255,162,58,.9)"></span>
+          </span>
+        </label>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 14px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788">Liste réseaux · force de signal</div>
+        <div style="display: grid; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 14px; background: #0B0C10; border: 3px solid #45E07F; border-radius: 16px; padding: 14px 16px; min-height: 56px; box-sizing: border-box">
+            <span style="display: flex; align-items: flex-end; gap: 3px; height: 20px"><span style="width: 5px; height: 6px; border-radius: 2px; background: #45E07F"></span><span style="width: 5px; height: 11px; border-radius: 2px; background: #45E07F"></span><span style="width: 5px; height: 16px; border-radius: 2px; background: #45E07F"></span><span style="width: 5px; height: 20px; border-radius: 2px; background: #45E07F"></span></span>
+            <span style="flex: 1; font-size: 16px; font-weight: 600">Freebox‑Marion</span>
+            <span style="width: 22px; height: 22px; border-radius: 999px; background: #45E07F; color: #05240F; display: grid; place-items: center; font-size: 13px; font-weight: 800">✓</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 16px; padding: 14px 16px; min-height: 56px; box-sizing: border-box" style-hover="border-color:#4A5160">
+            <span style="display: flex; align-items: flex-end; gap: 3px; height: 20px"><span style="width: 5px; height: 6px; border-radius: 2px; background: #B9BFCC"></span><span style="width: 5px; height: 11px; border-radius: 2px; background: #B9BFCC"></span><span style="width: 5px; height: 16px; border-radius: 2px; background: #B9BFCC"></span><span style="width: 5px; height: 20px; border-radius: 2px; background: #2A2F3B"></span></span>
+            <span style="flex: 1; font-size: 16px">Freebox‑invités</span>
+            <span style="font-family: ui-monospace, monospace; font-size: 11px; color: #6F7788">WPA2</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 16px; padding: 14px 16px; min-height: 56px; box-sizing: border-box" style-hover="border-color:#4A5160">
+            <span style="display: flex; align-items: flex-end; gap: 3px; height: 20px"><span style="width: 5px; height: 6px; border-radius: 2px; background: #B9BFCC"></span><span style="width: 5px; height: 11px; border-radius: 2px; background: #2A2F3B"></span><span style="width: 5px; height: 16px; border-radius: 2px; background: #2A2F3B"></span><span style="width: 5px; height: 20px; border-radius: 2px; background: #2A2F3B"></span></span>
+            <span style="flex: 1; font-size: 16px; color: #B9BFCC">Livebox‑8A21</span>
+            <span style="font-family: ui-monospace, monospace; font-size: 11px; color: #6F7788">faible</span>
+          </div>
+        </div>
+        <p data-why="1" style="margin: 0; font-size: 14px; color: #6F7788; font-style: italic; line-height: 1.5">Pourquoi des barres et pas une icône : 4 rectangles pèsent 0,1 Ko en HTML pur, aucune police d'icônes, aucune requête.</p>
+      </div>
+
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 22px; display: grid; gap: 16px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788">Bouton principal · secondaire</div>
+        <button type="button" style="min-height: 60px; border: 0; border-radius: 18px; background: #45E07F; color: #05240F; font-family: inherit; font-size: 18px; font-weight: 800; letter-spacing: -.01em; cursor: pointer; box-shadow: 0 14px 30px -14px rgba(69,224,127,.85); transition: transform 140ms cubic-bezier(.34,1.56,.64,1)" style-hover="transform:translateY(-2px)" style-active="transform:translateY(1px) scale(.99)">Enregistrer et redémarrer</button>
+        <button type="button" style="min-height: 60px; border: 3px solid #2A2F3B; border-radius: 18px; background: transparent; color: #EDEAE3; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer" style-hover="border-color:#B9BFCC">Rescanner les réseaux</button>
+        <div style="display: flex; align-items: center; gap: 14px; background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 18px; padding: 16px">
+          <span style="width: 16px; height: 16px; border-radius: 999px; background: #F4F1EA; box-shadow: 0 0 14px 4px rgba(244,241,234,.35); flex: none"></span>
+          <span style="display: grid; gap: 3px"><strong style="font-size: 15px">Aucune donnée depuis 14 min</strong><span style="font-family: ui-monospace, monospace; font-size: 11.5px; color: #9AA1B1">bandeau d'état · blanc = on ne sait pas</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; background: #FF1F33; border-radius: 18px; padding: 16px; box-shadow: 0 18px 40px -18px rgba(255,31,51,.9)">
+          <span style="width: 16px; height: 16px; border-radius: 999px; background: #14000A; flex: none; animation: vHypo 1.2s ease-in-out infinite"></span>
+          <span style="display: grid; gap: 3px; color: #14000A"><strong style="font-size: 15px; letter-spacing: .01em">Hypo en cours · 62 mg/dL ↓</strong><span style="font-family: ui-monospace, monospace; font-size: 11.5px; opacity: .75">bandeau d'alerte · même bloc, tout le contraste</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; background: #1F232D; border: 3px solid #45E07F; border-radius: 18px; padding: 16px; animation: vToast 600ms cubic-bezier(.34,1.56,.64,1) both">
+          <span style="width: 24px; height: 24px; border-radius: 999px; background: #45E07F; color: #05240F; display: grid; place-items: center; font-weight: 800; font-size: 14px; flex: none">✓</span>
+          <span style="font-size: 15px; font-weight: 600">Réglages enregistrés — la veilleuse redémarre</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 72px 28px 0">
+    <div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-top: 3px solid #2A2F3B; padding-top: 22px; margin-bottom: 8px">
+      <h2 style="margin: 0; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">04 — Page de config</h2>
+      <p style="margin: 0; color: #9AA1B1; font-size: 15px">Portail captif → WiFi → compte Dexcom → réglages → confirmation.</p>
+    </div>
+    <p data-why="1" style="margin: 0 0 30px; max-width: 66ch; font-size: 15px; line-height: 1.6; color: #6F7788; font-style: italic">Pourquoi une seule page qui défile plutôt qu'un assistant multi‑écrans : un seul document HTML, zéro routage, zéro JS de navigation — la contrainte des 20 Ko produit ici la bonne UX mobile.</p>
+
+    <div style="display: flex; gap: 20px; overflow-x: auto; padding: 6px 0 22px; scrollbar-width: thin">
+
+      <div style="flex: none; width: 330px; display: grid; gap: 12px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #B96BFF">1 · Portail captif</div>
+        <div style="background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 32px; padding: 16px; display: grid; gap: 14px; box-shadow: 0 30px 60px -30px rgba(185,107,255,.6)">
+          <div style="display: flex; justify-content: space-between; font-family: ui-monospace, monospace; font-size: 11px; color: #6F7788; padding: 2px 6px"><span>22:41</span><span>Veilleuse‑A1B2</span></div>
+          <div style="display: grid; place-items: center; padding: 8px 0 0"><svg viewBox="0 0 200 190" width="150" style="display: block; overflow: visible">
+            <ellipse cx="100" cy="166" rx="60" ry="12" fill="#B96BFF" opacity=".26" style="filter: blur(7px); animation: vBreathe 3s ease-in-out infinite"></ellipse>
+            <circle cx="100" cy="92" r="70" fill="#B96BFF" opacity=".24" style="filter: blur(18px); animation: vBreathe 3s ease-in-out infinite"></circle>
+            <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+            <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+            <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#B96BFF" style="animation: vBreathe 3s ease-in-out infinite"></rect></g>
+            <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+            <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+          </svg></div>
+          <div style="display: grid; gap: 8px; text-align: center; padding: 0 6px">
+            <h3 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.025em">Bonsoir.<br>On la met en route ?</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #B9BFCC">La veilleuse respire en violet : elle attend ses réglages. Trois minutes, une main.</p>
+          </div>
+          <button type="button" style="min-height: 58px; border: 0; border-radius: 18px; background: #B96BFF; color: #16021F; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 14px 30px -14px rgba(185,107,255,.9)">Commencer</button>
+          <div style="text-align: center; font-family: ui-monospace, monospace; font-size: 11px; color: #6F7788">hors ligne · aucune donnée ne sort d'ici</div>
+        </div>
+      </div>
+
+      <div style="flex: none; width: 330px; display: grid; gap: 12px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #45E07F">2 · Réseau WiFi</div>
+        <div style="background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 32px; padding: 16px; display: grid; gap: 14px; align-content: start">
+          <div style="display: flex; align-items: center; gap: 12px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 13px 14px">
+            <span style="width: 14px; height: 14px; border-radius: 999px; background: #B96BFF; flex: none; animation: vBreathe 3s ease-in-out infinite"></span>
+            <span style="flex: 1; font-size: 14px; font-weight: 600">En attente de configuration</span>
+            <span style="font-family: ui-monospace, monospace; font-size: 10.5px; color: #6F7788">fw 1.4.2</span>
+          </div>
+          <h3 style="margin: 4px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em">Choisis ton réseau</h3>
+          <div style="display: grid; gap: 8px">
+            <div style="display: flex; align-items: center; gap: 12px; background: #14161D; border: 3px solid #45E07F; border-radius: 16px; padding: 14px; min-height: 56px; box-sizing: border-box">
+              <span style="display: flex; align-items: flex-end; gap: 3px; height: 18px"><span style="width: 5px; height: 5px; border-radius: 2px; background: #45E07F"></span><span style="width: 5px; height: 10px; border-radius: 2px; background: #45E07F"></span><span style="width: 5px; height: 14px; border-radius: 2px; background: #45E07F"></span><span style="width: 5px; height: 18px; border-radius: 2px; background: #45E07F"></span></span>
+              <span style="flex: 1; font-size: 15px; font-weight: 600">Freebox‑Marion</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 14px; min-height: 56px; box-sizing: border-box">
+              <span style="display: flex; align-items: flex-end; gap: 3px; height: 18px"><span style="width: 5px; height: 5px; border-radius: 2px; background: #B9BFCC"></span><span style="width: 5px; height: 10px; border-radius: 2px; background: #B9BFCC"></span><span style="width: 5px; height: 14px; border-radius: 2px; background: #2A2F3B"></span><span style="width: 5px; height: 18px; border-radius: 2px; background: #2A2F3B"></span></span>
+              <span style="flex: 1; font-size: 15px; color: #B9BFCC">Livebox‑8A21</span>
+            </div>
+          </div>
+          <span style="display: flex; align-items: center; background: #14161D; border: 3px solid #FFA23A; border-radius: 16px; padding: 0 6px 0 14px; min-height: 54px">
+            <input type="password" value="motdepasse" style="flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 16px; letter-spacing: .18em; color: #EDEAE3; background: transparent; border: 0; outline: none; padding: 13px 0">
+            <button type="button" style="font-family: ui-monospace, monospace; font-size: 11px; color: #0B0C10; background: #B9BFCC; border: 0; border-radius: 11px; padding: 11px 12px; cursor: pointer">VOIR</button>
+          </span>
+          <button type="button" style="min-height: 56px; border: 0; border-radius: 18px; background: #45E07F; color: #05240F; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer">Se connecter</button>
+          <button type="button" style="min-height: 50px; border: 3px solid #2A2F3B; border-radius: 16px; background: transparent; color: #B9BFCC; font-family: inherit; font-size: 15px; cursor: pointer">Rescanner</button>
+        </div>
+      </div>
+
+      <div style="flex: none; width: 330px; display: grid; gap: 12px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #FFA23A">3 · Compte Dexcom</div>
+        <div style="background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 32px; padding: 16px; display: grid; gap: 14px; align-content: start">
+          <div style="display: flex; align-items: center; gap: 12px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 13px 14px">
+            <span style="width: 14px; height: 14px; border-radius: 999px; background: #45E07F; flex: none; box-shadow: 0 0 12px 3px rgba(69,224,127,.5)"></span>
+            <span style="flex: 1; font-size: 14px; font-weight: 600">WiFi connecté</span>
+            <span style="font-family: ui-monospace, monospace; font-size: 10.5px; color: #6F7788">‑48 dBm</span>
+          </div>
+          <h3 style="margin: 4px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em">Compte publieur</h3>
+          <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #B9BFCC">Les identifiants Dexcom Share du porteur. Ils restent dans la veilleuse.</p>
+          <label style="display: grid; gap: 7px; font-size: 14px; font-weight: 600">Email
+            <input type="text" value="marion@exemple.fr" style="font-family: inherit; font-size: 16px; color: #EDEAE3; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 14px; min-height: 54px; box-sizing: border-box; outline: none">
+          </label>
+          <label style="display: grid; gap: 7px; font-size: 14px; font-weight: 600">Mot de passe
+            <input type="password" value="dexcompass" style="font-family: ui-monospace, Menlo, monospace; font-size: 16px; letter-spacing: .18em; color: #EDEAE3; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 14px; min-height: 54px; box-sizing: border-box; outline: none">
+          </label>
+          <div style="display: grid; gap: 7px; font-size: 14px; font-weight: 600">Région du compte
+            <div style="display: flex; gap: 6px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 999px; padding: 5px">
+              <button type="button" style="flex: 1; min-height: 46px; border: 0; border-radius: 999px; background: #FFA23A; color: #201203; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Europe</button>
+              <button type="button" style="flex: 1; min-height: 46px; border: 0; border-radius: 999px; background: transparent; color: #B9BFCC; font-family: inherit; font-size: 15px; cursor: pointer">US</button>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; background: #14161D; border: 3px solid #B96BFF; border-radius: 16px; padding: 14px">
+            <span style="display: flex; gap: 4px; flex: none"><span style="width: 12px; height: 12px; border-radius: 999px; background: #B96BFF; animation: vSwap .6s steps(1, end) infinite"></span><span style="width: 12px; height: 12px; border-radius: 999px; background: #FF1F33; animation: vSwapB .6s steps(1, end) infinite"></span></span>
+            <span style="font-size: 13.5px; line-height: 1.45; color: #E4DCEA">Si la lampe clignote violet/rouge, les identifiants sont refusés.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex: none; width: 330px; display: grid; gap: 12px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #FF6B1F">4 · Seuils &amp; nuit</div>
+        <div style="background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 32px; padding: 16px; display: grid; gap: 12px; align-content: start">
+          <div style="display: flex; align-items: center; gap: 12px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 13px 14px">
+            <span style="width: 14px; height: 14px; border-radius: 999px; background: #45E07F; flex: none; box-shadow: 0 0 12px 3px rgba(69,224,127,.5)"></span>
+            <span style="flex: 1; display: grid; gap: 2px"><strong style="font-size: 14px">Dernière valeur</strong><span style="font-family: ui-monospace, monospace; font-size: 11px; color: #9AA1B1">il y a 40 s</span></span>
+            <span style="font-family: ui-monospace, monospace; font-size: 20px; font-weight: 700">118 <span style="font-size: 13px; color: #45E07F">→</span></span>
+          </div>
+          <h3 style="margin: 4px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em">Seuils (mg/dL)</h3>
+          <div style="display: flex; align-items: center; gap: 10px; background: #14161D; border: 3px solid #FF1F33; border-radius: 16px; padding: 7px 7px 7px 14px">
+            <strong style="flex: 1; font-size: 15px">Hypo</strong>
+            <button type="button" style="width: 44px; height: 44px; border-radius: 13px; border: 0; background: #1F232D; color: #EDEAE3; font-size: 21px; cursor: pointer">−</button>
+            <span style="font-family: ui-monospace, monospace; font-size: 20px; font-weight: 700; min-width: 2.4em; text-align: center">70</span>
+            <button type="button" style="width: 44px; height: 44px; border-radius: 13px; border: 0; background: #FF1F33; color: #14000A; font-size: 21px; font-weight: 700; cursor: pointer">+</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 7px 7px 7px 14px">
+            <strong style="flex: 1; font-size: 15px">Hyper</strong>
+            <button type="button" style="width: 44px; height: 44px; border-radius: 13px; border: 0; background: #1F232D; color: #EDEAE3; font-size: 21px; cursor: pointer">−</button>
+            <span style="font-family: ui-monospace, monospace; font-size: 20px; font-weight: 700; min-width: 2.4em; text-align: center">180</span>
+            <button type="button" style="width: 44px; height: 44px; border-radius: 13px; border: 0; background: #FFA23A; color: #201203; font-size: 21px; font-weight: 700; cursor: pointer">+</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 16px; padding: 7px 7px 7px 14px">
+            <strong style="flex: 1; font-size: 15px">Gyrophare</strong>
+            <button type="button" style="width: 44px; height: 44px; border-radius: 13px; border: 0; background: #1F232D; color: #EDEAE3; font-size: 21px; cursor: pointer">−</button>
+            <span style="font-family: ui-monospace, monospace; font-size: 20px; font-weight: 700; min-width: 2.4em; text-align: center">300</span>
+            <button type="button" style="width: 44px; height: 44px; border-radius: 13px; border: 0; background: #FF6B1F; color: #200A02; font-size: 21px; font-weight: 700; cursor: pointer">+</button>
+          </div>
+          <h3 style="margin: 8px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em">Mode nuit</h3>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span style="font-family: ui-monospace, monospace; font-size: 19px; font-weight: 700; background: #14161D; border: 3px solid #2A2F3B; border-radius: 14px; padding: 12px 14px">22:00</span>
+            <span style="flex: 1; height: 4px; border-radius: 999px; background: linear-gradient(90deg, #B96BFF, #2A2F3B)"></span>
+            <span style="font-family: ui-monospace, monospace; font-size: 19px; font-weight: 700; background: #14161D; border: 3px solid #2A2F3B; border-radius: 14px; padding: 12px 14px">07:00</span>
+          </div>
+          <div style="display: grid; gap: 9px; font-size: 14px; font-weight: 600">
+            <span style="display: flex; justify-content: space-between">Luminosité réduite <span style="font-family: ui-monospace, monospace; color: #FFA23A">22 %</span></span>
+            <span style="display: block; position: relative; height: 12px; border-radius: 999px; background: #14161D; border: 3px solid #2A2F3B">
+              <span style="position: absolute; inset: 0 auto 0 0; width: 22%; border-radius: 999px; background: #FFA23A"></span>
+              <span style="position: absolute; left: 22%; top: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 999px; background: #EDEAE3; border: 3px solid #07080B"></span>
+            </span>
+          </div>
+          <p data-why="1" style="margin: 2px 0 0; font-size: 13px; color: #6F7788; font-style: italic; line-height: 1.5">L'hypo ignore le mode nuit : à 22 % elle réveillerait personne.</p>
+          <button type="button" style="min-height: 58px; border: 0; border-radius: 18px; background: #45E07F; color: #05240F; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 14px 30px -14px rgba(69,224,127,.85)">Enregistrer</button>
+        </div>
+      </div>
+
+      <div style="flex: none; width: 330px; display: grid; gap: 12px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #4C8CFF">5 · Confirmation</div>
+        <div style="background: #0B0C10; border: 3px solid #2A2F3B; border-radius: 32px; padding: 16px; display: grid; gap: 16px; align-content: start; box-shadow: 0 30px 60px -30px rgba(69,224,127,.5)">
+          <div style="display: grid; place-items: center; padding: 10px 0 0"><svg viewBox="0 0 200 190" width="150" style="display: block; overflow: visible">
+            <ellipse cx="100" cy="166" rx="60" ry="12" fill="#45E07F" opacity=".28" style="filter: blur(7px)"></ellipse>
+            <circle cx="100" cy="92" r="70" fill="#45E07F" opacity=".22" style="filter: blur(18px); animation: vGlow 3s ease-in-out infinite"></circle>
+            <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+            <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+            <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#45E07F" opacity=".92"></rect></g>
+            <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+            <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".38" style="filter: blur(4px)"></ellipse>
+            <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+          </svg></div>
+          <div style="display: grid; gap: 8px; text-align: center">
+            <h3 style="margin: 0; font-size: 25px; font-weight: 800; letter-spacing: -.025em">Elle veille.</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #B9BFCC">Vert : 118 mg/dL, stable. Prochaine lecture dans 60 s.</p>
+          </div>
+          <div style="display: grid; gap: 8px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 18px; padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #9AA1B1; line-height: 1.9">
+            <div style="display: flex; justify-content: space-between"><span>adresse</span><span style="color: #EDEAE3">veilleuse‑a1b2c3.local</span></div>
+            <div style="display: flex; justify-content: space-between"><span>firmware</span><span style="color: #EDEAE3">1.4.2</span></div>
+            <div style="display: flex; justify-content: space-between"><span>seuils</span><span style="color: #EDEAE3">70 / 180 / 300</span></div>
+            <div style="display: flex; justify-content: space-between"><span>nuit</span><span style="color: #EDEAE3">22:00 → 07:00 · 22 %</span></div>
+          </div>
+          <div style="display: grid; gap: 7px">
+            <div style="font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #6F7788">Mise à jour</div>
+            <div style="height: 14px; border-radius: 999px; background: #14161D; border: 3px solid #2A2F3B; overflow: hidden"><div style="height: 100%; background: #4C8CFF; border-radius: 999px; animation: vBar 2.6s cubic-bezier(.4, 0, .2, 1) infinite"></div></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; background: #1F232D; border: 3px solid #45E07F; border-radius: 18px; padding: 14px; animation: vToast 700ms cubic-bezier(.34, 1.56, .64, 1) both">
+            <span style="width: 22px; height: 22px; border-radius: 999px; background: #45E07F; color: #05240F; display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none">✓</span>
+            <span style="font-size: 14px; font-weight: 600">Réglages enregistrés</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 60px 28px 0">
+    <div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-top: 3px solid #2A2F3B; padding-top: 22px; margin-bottom: 26px">
+      <h2 style="margin: 0; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">05 — Piste vitrine</h2>
+      <p style="margin: 0; color: #9AA1B1; font-size: 15px">Mêmes tokens, échelle desktop : la DA tient‑elle en grand ?</p>
+    </div>
+
+    <div style="background: radial-gradient(1100px 520px at 76% 32%, rgba(69,224,127,.16), transparent 62%), #101219; border: 3px solid #2A2F3B; border-radius: 34px; padding: 46px; display: grid; grid-template-columns: minmax(280px, 1.05fr) minmax(240px, .95fr); gap: 40px; align-items: center">
+      <div style="display: grid; gap: 24px">
+        <div style="display: flex; align-items: center; gap: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #9AA1B1">
+          <span style="width: 24px; height: 24px; border-radius: 999px; background: #45E07F; box-shadow: 0 0 18px 5px rgba(69,224,127,.45)"></span>Veilleuse
+        </div>
+        <h2 style="margin: 0; font-size: clamp(36px, 5vw, 62px); line-height: .98; font-weight: 800; letter-spacing: -.035em; text-wrap: balance">Sa glycémie,<br>en lumière,<br>toute la nuit.</h2>
+        <p style="margin: 0; max-width: 44ch; font-size: 18px; line-height: 1.55; color: #B9BFCC; text-wrap: pretty">Un galet posé sur la table de nuit. Vert : dors. Orange : demain on regarde. Rouge qui pulse : lève‑toi. Pas d'écran, pas de chiffre, pas de notification.</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap">
+          <button type="button" style="min-height: 60px; padding: 0 26px; border: 0; border-radius: 18px; background: #45E07F; color: #05240F; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 16px 34px -16px rgba(69,224,127,.9)">Voir comment ça marche</button>
+          <button type="button" style="min-height: 60px; padding: 0 26px; border: 3px solid #2A2F3B; border-radius: 18px; background: transparent; color: #EDEAE3; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer">Imprimer la sienne</button>
+        </div>
+        <div style="display: flex; gap: 18px; flex-wrap: wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #6F7788; letter-spacing: .06em">
+          <span>Dexcom G7 · Share</span><span>lecture 60 s</span><span>ESP8266 · 12 LED</span><span>Ø80 × 72 mm</span>
+        </div>
+      </div>
+      <div style="display: grid; place-items: center"><svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible; max-width: 340px">
+        <ellipse cx="100" cy="168" rx="76" ry="16" fill="#45E07F" opacity=".26" style="filter: blur(10px)"></ellipse>
+        <circle cx="100" cy="92" r="86" fill="#45E07F" opacity=".2" style="filter: blur(26px); animation: vGlow 4s ease-in-out infinite"></circle>
+        <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <g clip-path="url(#domeClip)"><rect x="40" y="52" width="120" height="64" fill="#45E07F" opacity=".92"></rect></g>
+        <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <ellipse cx="74" cy="78" rx="13" ry="20" fill="#FFFFFF" opacity=".4" style="filter: blur(5px)"></ellipse>
+        <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+      </svg></div>
+    </div>
+    <p data-why="1" style="margin: 18px 0 0; max-width: 74ch; font-size: 15px; line-height: 1.6; color: #6F7788; font-style: italic">Pourquoi ça tient en grand : le hero n'ajoute aucun ingrédient — même galet, mêmes contours, mêmes ombres colorées, juste plus d'air et une typo plus grande. Le seul dégradé autorisé est un halo de couleur d'état, jamais un dégradé décoratif.</p>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 60px 28px 0">
+    <div style="border-top: 3px solid #2A2F3B; padding-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px">
+      <div style="display: grid; gap: 8px">
+        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">06 — Budget 20 Ko</div>
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #B9BFCC; max-width: 40ch">La contrainte fait l'esthétique : pas de police à charger, donc une stack système assumée ; pas d'icônes, donc des formes géométriques ; pas de framework, donc des animations CSS et un SVG unique réutilisé partout.</p>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: #9AA1B1; line-height: 2; display: grid">
+        <div style="display: flex; justify-content: space-between"><span>tokens CSS</span><span style="color: #EDEAE3">0,9 Ko</span></div>
+        <div style="display: flex; justify-content: space-between"><span>SVG lampe (1×)</span><span style="color: #EDEAE3">1,1 Ko</span></div>
+        <div style="display: flex; justify-content: space-between"><span>keyframes</span><span style="color: #EDEAE3">0,6 Ko</span></div>
+        <div style="display: flex; justify-content: space-between"><span>kit + page</span><span style="color: #EDEAE3">~11 Ko</span></div>
+        <div style="display: flex; justify-content: space-between"><span>JS (scan, submit)</span><span style="color: #EDEAE3">~2 Ko</span></div>
+        <div style="display: flex; justify-content: space-between; border-top: 2px solid #2A2F3B; margin-top: 6px; padding-top: 6px"><span style="color: #45E07F">marge</span><span style="color: #45E07F">~4 Ko</span></div>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 22px; padding: 20px; display: grid; gap: 10px; font-size: 14.5px; line-height: 1.55; color: #B9BFCC">
+        <strong style="color: #EDEAE3; font-size: 15px">Règles à ne pas casser</strong>
+        <span>· Blanc pour « on ne sait pas », jamais vert.</span>
+        <span>· L'hypo ne se réduit ni en luminosité ni en durée.</span>
+        <span>· Une seule couleur pleine à la fois sur le dôme.</span>
+        <span>· Le mouvement dit la gravité, la couleur dit l'état.</span>
+        <span>· Aucun graphique, aucune courbe, aucune jauge.</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showWhy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Présentation&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Présentation&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this.sync(); }
+  componentDidUpdate() { this.sync(); }
+  sync() {
+    let tag = document.getElementById('v-da-flags');
+    if (!tag) {
+      tag = document.createElement('style');
+      tag.id = 'v-da-flags';
+      document.head.appendChild(tag);
+    }
+    const showWhy = this.props.showWhy ?? true;
+    const reduce = this.props.reduceMotion ?? false;
+    tag.textContent =
+      (showWhy ? '' : '[data-why]{display:none!important}') +
+      (reduce ? '*{animation:none!important}' : '');
+  }
+  renderVals() { return {}; }
+}
+
+</script>
+</body>
+</html>

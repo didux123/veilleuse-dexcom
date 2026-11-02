@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Halo, une veilleuse connectée qui traduit la glycémie Dexcom G6 / G7 en couleur et en rythme. Pas d'écran, pas de chiffre, pas d'appli.">
+<meta name="theme-color" content="#0B0C10">
+<meta property="og:title" content="Halo — la veilleuse qui dit la glycémie en couleur">
+<meta property="og:description" content="Un galet lumineux sur la table de nuit : vert, orange, rouge. Rien d'autre à lire à 3 h du matin.">
+<meta property="og:image" content="img/og.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%2345E07F'/%3E%3C/svg%3E">
+<title>Halo — la veilleuse qui dit la glycémie en couleur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #0B0C10; }
+  a { color: #FFA23A; text-decoration: none; }
+  a:hover { color: #45E07F; }
+  ::selection { background: #FFA23A; color: #0B0C10; }
+  @keyframes gGlow { 0%,100% { opacity: .16 } 50% { opacity: .30 } }
+  @keyframes gBreathe { 0%,100% { opacity: .12 } 50% { opacity: 1 } }
+  @keyframes gPulse { 0% { opacity: 0 } 40% { opacity: 1 } 100% { opacity: 0 } }
+  @keyframes gSpin { to { transform: rotate(360deg) } }
+  @keyframes gSwap { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+  @keyframes gSwapB { 0%,49% { opacity: 0 } 50%,100% { opacity: 1 } }
+  @keyframes gRise { 0% { opacity: 0; transform: translateY(16px) } 100% { opacity: 1; transform: none } }
+</style>
+<style>
+.hv0:hover{color:#EDEAE3 !important}
+.hv1:hover{color:#EDEAE3 !important}
+.hv2:hover{color:#EDEAE3 !important}
+.hv3:hover{color:#EDEAE3 !important}
+.hv4:hover{transform:translateY(-2px) !important;color:#05240F !important}
+.hv5:hover{border-color:#B9BFCC !important;color:#EDEAE3 !important}
+.hv6:hover{color:#05240F !important;transform:translateY(-2px) !important}
+.hv7:hover{border-color:#B9BFCC !important;color:#EDEAE3 !important}
+/* --- Ajouts pour la version statique : focus clavier + petit écran --- */
+a:focus-visible, button:focus-visible { outline: 3px solid #FFA23A; outline-offset: 3px; }
+img { max-width: 100%; }
+@media (max-width: 760px) {
+  [style*="max-width: 1180px"] { padding-left: 16px !important; padding-right: 16px !important; }
+  [style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
+  [style*="padding: 40px"], [style*="padding: 44px"], [style*="padding: 60px 40px"] { padding: 24px !important; }
+  [style*="border-radius: 34px"] { border-radius: 26px !important; }
+}
+@media (max-width: 760px) {
+  nav [style*="gap: 22px"] { display: none !important; }
+  header#top { padding-top: 48px !important; padding-bottom: 40px !important; gap: 32px !important; }
+  header#top svg { max-width: 240px !important; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><clipPath id="gDome"><path d="M44 112 V92 C44 56 156 56 156 92 V112 Z"></path></clipPath></defs></svg>
+
+<div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0B0C10; color: #EDEAE3; -webkit-font-smoothing: antialiased">
+
+  <nav style="position: sticky; top: 0; z-index: 20; background: rgba(11,12,16,.86); backdrop-filter: blur(14px); border-bottom: 2px solid #1F232D">
+    <div style="max-width: 1180px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px">
+      <a href="#top" style="display: flex; align-items: center; gap: 11px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: #EDEAE3">
+        <span style="width: 15px; height: 15px; border-radius: 999px; background: #45E07F; box-shadow: 0 0 16px 4px rgba(69,224,127,.5); flex: none"></span>halo
+      </a>
+      <span style="flex: 1"></span>
+      <div style="display: flex; gap: 22px; font-size: 14.5px; color: #B9BFCC">
+        <a href="#demo" style="color: #B9BFCC" class="hv0">La démo</a>
+        <a href="#marche" style="color: #B9BFCC" class="hv1">Comment ça marche</a>
+        <a href="#objet" style="color: #B9BFCC" class="hv2">L'objet</a>
+        <a href="#faq" style="color: #B9BFCC" class="hv3">FAQ</a>
+      </div>
+      <a href="#commander" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 14px; background: #45E07F; color: #05240F; font-size: 15px; font-weight: 700">Précommander</a>
+    </div>
+  </nav>
+
+  <header id="top" style="max-width: 1180px; margin: 0 auto; padding: 96px 28px 72px; display: grid; grid-template-columns: minmax(300px, 1.05fr) minmax(260px, .95fr); gap: 56px; align-items: center">
+    <div style="display: grid; gap: 26px">
+      <div style="display: flex; align-items: center; gap: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #9AA1B1">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #45E07F; box-shadow: 0 0 12px 3px rgba(69,224,127,.55)"></span>
+        Veilleuse connectée · Dexcom G6 / G7
+      </div>
+      <h1 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(42px, 6.4vw, 78px); line-height: .96; font-weight: 700; letter-spacing: -.035em; text-wrap: balance">Sa glycémie,<br>en lumière,<br><span style="color: #FFA23A">toute la nuit.</span></h1>
+      <p style="margin: 0; max-width: 46ch; font-size: 19px; line-height: 1.55; color: #B9BFCC; text-wrap: pretty">Halo est un galet lumineux posé sur la table de nuit. Il change de couleur et de rythme au fil de la nuit, et c'est tout. Pas d'écran, pas de chiffre, pas de notification à décoder à 3 h du matin.</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap">
+        <a href="#commander" style="min-height: 60px; display: inline-flex; align-items: center; padding: 0 26px; border-radius: 18px; background: #45E07F; color: #05240F; font-size: 17px; font-weight: 700; box-shadow: 0 16px 34px -16px rgba(69,224,127,.9); transition: transform 140ms cubic-bezier(.34,1.56,.64,1)" class="hv4">Précommander Halo</a>
+        <a href="#demo" style="min-height: 60px; display: inline-flex; align-items: center; padding: 0 26px; border: 3px solid #2A2F3B; border-radius: 18px; color: #EDEAE3; font-size: 17px; font-weight: 600" class="hv5">Voir la démo</a>
+      </div>
+    </div>
+    <div style="display: grid; place-items: center">
+      <svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible; max-width: 380px">
+        <ellipse cx="100" cy="168" rx="78" ry="16" fill="#45E07F" opacity=".26" style="filter: blur(10px)"></ellipse>
+        <circle cx="100" cy="92" r="88" fill="#45E07F" opacity=".2" style="filter: blur(28px); animation: gGlow 4s ease-in-out infinite"></circle>
+        <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <g clip-path="url(#gDome)"><rect x="40" y="52" width="120" height="64" fill="#45E07F" opacity=".92"></rect></g>
+        <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <ellipse cx="74" cy="78" rx="13" ry="20" fill="#FFFFFF" opacity=".4" style="filter: blur(5px)"></ellipse>
+        <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+      </svg>
+    </div>
+  </header>
+
+  <section style="border-top: 2px solid #1F232D; border-bottom: 2px solid #1F232D; background: #0E1015">
+    <div style="max-width: 1180px; margin: 0 auto; padding: 56px 28px; display: grid; gap: 26px">
+      <div style="font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">Pensé pour</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px">
+        <div style="display: grid; gap: 8px; border-left: 3px solid #45E07F; padding-left: 18px">
+          <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(20px, 2.2vw, 27px); font-weight: 700; letter-spacing: -.025em; line-height: 1.15">Les parents d'enfants T1</strong>
+          <span style="font-size: 15px; line-height: 1.5; color: #9AA1B1">La chambre d'à côté, sans y entrer.</span>
+        </div>
+        <div style="display: grid; gap: 8px; border-left: 3px solid #FFA23A; padding-left: 18px">
+          <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(20px, 2.2vw, 27px); font-weight: 700; letter-spacing: -.025em; line-height: 1.15">Les conjoints qui dorment mal</strong>
+          <span style="font-size: 15px; line-height: 1.5; color: #9AA1B1">Un œil ouvert suffit, le téléphone reste posé.</span>
+        </div>
+        <div style="display: grid; gap: 8px; border-left: 3px solid #B96BFF; padding-left: 18px">
+          <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(20px, 2.2vw, 27px); font-weight: 700; letter-spacing: -.025em; line-height: 1.15">Les colocs, les grands-parents, les internats</strong>
+          <span style="font-size: 15px; line-height: 1.5; color: #9AA1B1">Rien à installer, rien à apprendre.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo" style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div style="background: radial-gradient(1100px 520px at 78% 30%, rgba(255,162,58,.12), transparent 62%), #101219; border: 3px solid #2A2F3B; border-radius: 34px; padding: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; align-items: center">
+      <div style="display: grid; gap: 20px">
+        <div style="font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">La démo · huit états</div>
+        <h2 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(28px, 3.4vw, 44px); line-height: 1.04; font-weight: 700; letter-spacing: -.03em; text-wrap: balance">Appuie, et regarde la chambre changer.</h2>
+        <p style="margin: 0; max-width: 44ch; font-size: 16.5px; line-height: 1.55; color: #B9BFCC">Quatre couleurs pour la nuit, quatre pour la mise en route. Chaque état a son rythme : c'est le mouvement qui se remarque, pas la teinte.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <button type="button" data-b="@click=pickLow;style=chipLow">Bas</button><button type="button" data-b="@click=pickOk;style=chipOk">Dans la plage</button>
+          <button type="button" data-b="@click=pickHigh;style=chipHigh">Haut</button>
+          <button type="button" data-b="@click=pickSev;style=chipSev">Très haut</button>
+          
+          <button type="button" data-b="@click=pickUnknown;style=chipUnknown">Sans données</button>
+          <button type="button" data-b="@click=pickSetup;style=chipSetup">Configuration</button>
+          <button type="button" data-b="@click=pickReject;style=chipReject">Identifiants refusés</button>
+          <button type="button" data-b="@click=pickBoot;style=chipBoot">Démarrage</button>
+        </div>
+        <div style="display: grid; gap: 6px; min-height: 96px; align-content: start">
+          <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 22px; letter-spacing: -.02em"><span data-t="demoTitle"></span></strong>
+          <div style="font-family: ui-monospace, monospace; font-size: 12px; color: #9AA1B1"><span data-t="demoMeta"></span></div>
+          <p style="margin: 2px 0 0; max-width: 44ch; font-size: 15px; line-height: 1.55; color: #B9BFCC"><span data-t="demoText"></span></p>
+        </div>
+      </div>
+      <div style="display: grid; place-items: center">
+        <svg viewBox="0 0 200 190" width="100%" style="display: block; overflow: visible; max-width: 320px">
+          <ellipse cx="100" cy="168" rx="72" ry="15" opacity=".26" style="filter: blur(9px)" data-b="fill=demoColor"></ellipse>
+          <circle cx="100" cy="92" r="84" opacity=".26" data-b="fill=demoColor;style=demoHalo"></circle>
+          <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <g clip-path="url(#gDome)">
+            <rect x="40" y="52" width="120" height="64" data-b="fill=demoColor;style=demoDome"></rect>
+            <rect x="40" y="52" width="120" height="64" data-b="fill=demoColor2;style=demoDome2"></rect>
+            <g data-b="style=demoSweepStyle"><path d="M100 100 L100 34 A66 66 0 0 1 158 68 Z" data-b="fill=demoColor;opacity=demoSweepOpacity"></path></g>
+            <g data-b="style=demoDotStyle"><circle cx="100" cy="46" r="15" data-b="fill=demoColor;opacity=demoDotOpacity"></circle></g>
+          </g>
+          <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+          <ellipse cx="74" cy="78" rx="13" ry="20" fill="#FFFFFF" opacity=".34" style="filter: blur(5px)"></ellipse>
+          <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section id="marche" style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div style="display: grid; gap: 14px; max-width: 60ch; margin-bottom: 34px">
+      <div style="font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">Comment ça marche</div>
+      <h2 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; font-weight: 700; letter-spacing: -.03em">Trois minutes, une main, aucune application.</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px">
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 24px; display: grid; gap: 12px; align-content: start">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: #B96BFF; color: #16021F; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700">1</div>
+        <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 20px; letter-spacing: -.02em">Elle respire en violet</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Branche-la : elle ouvre son propre réseau WiFi. Tu t'y connectes, une page s'affiche toute seule.</p>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 24px; display: grid; gap: 12px; align-content: start">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: #FFA23A; color: #201203; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700">2</div>
+        <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 20px; letter-spacing: -.02em">Tu donnes le WiFi et le compte Share</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Les identifiants Dexcom Share du porteur, tes seuils, ta plage de nuit. Tout reste dans la lampe.</p>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 24px; display: grid; gap: 12px; align-content: start">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: #45E07F; color: #05240F; display: grid; place-items: center; font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700">3</div>
+        <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 20px; letter-spacing: -.02em">Elle veille
+</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Elle lit la valeur toutes les 60 secondes et se contente d'exister. Plus rien à faire jusqu'à la prochaine panne de courant.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px">
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 28px; display: grid; gap: 14px; align-content: start">
+        <div style="font-family: ui-monospace, monospace; font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: #B96BFF">Mode nuit</div>
+        <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -.025em">22 % de luminosité entre 22 h et 7 h</h3>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Assez pour lire la couleur depuis le lit, pas assez pour éclairer la pièce. Une seule exception, jamais négociable : l'hypo passe à pleine puissance.</p>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 28px; display: grid; gap: 14px; align-content: start">
+        <div style="font-family: ui-monospace, monospace; font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: #45E07F">Vie privée</div>
+        <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -.025em">Aucun serveur, aucun compte à créer</h3>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">La lampe parle directement à Dexcom Share. Nous n'avons pas de cloud, pas de base de données, rien à revendre — il n'y a personne entre elle et toi.</p>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 28px; display: grid; gap: 12px; align-content: start; font-size: 15px; line-height: 1.6; color: #B9BFCC">
+        <div style="font-family: ui-monospace, monospace; font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: #FF6B1F">Ce que Halo ne fait pas</div>
+        <span>· aucune courbe, aucun graphique, aucun chiffre</span>
+        <span>· aucune notification sur ton téléphone</span>
+        <span>· aucun historique, aucune statistique</span>
+        <span>· aucune décision à ta place</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div style="border: 3px solid #2A2F3B; border-radius: 30px; background: #101219; overflow: hidden; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+      <div style="min-height: 340px; display: block; position: relative">
+        <picture><source type="image/webp" srcset="img/hero-900.webp 900w, img/hero-1600.webp 1600w" sizes="(max-width: 760px) 100vw, 590px"><img src="img/hero-1600.jpg" srcset="img/hero-900.jpg 900w, img/hero-1600.jpg 1600w" sizes="(max-width: 760px) 100vw, 590px" alt="La veilleuse Halo allumée en vert sur une table de nuit, dans une chambre plongée dans la pénombre" width="1600" height="905" loading="lazy" decoding="async" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover"></picture>
+      </div>
+      <div style="padding: 44px; display: grid; gap: 18px; align-content: center">
+        <div style="font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">Pourquoi une lampe</div>
+        <blockquote style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(22px, 2.6vw, 32px); line-height: 1.22; font-weight: 500; letter-spacing: -.025em; text-wrap: pretty">« Je me réveillais six fois par nuit pour attraper mon téléphone, déverrouiller, lire un chiffre. Maintenant j'ouvre un œil. »</blockquote>
+        <div style="font-size: 14.5px; color: #9AA1B1">Le besoin de départ — un objet-compagnon, pas un moniteur de santé.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="objet" style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div style="display: grid; gap: 14px; max-width: 62ch; margin-bottom: 34px">
+      <div style="font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #FFA23A">L'objet</div>
+      <h2 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; font-weight: 700; letter-spacing: -.03em; text-wrap: balance">Un galet de 80 mm, et rien d'autre à installer.</h2>
+      <p style="margin: 0; font-size: 17px; line-height: 1.55; color: #B9BFCC">Corps noir mat, dôme blanc translucide, un seul câble qui part vers l'arrière. Elle arrive prête : tu la branches, tu donnes le WiFi, elle veille.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; align-items: start">
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 24px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #9AA1B1; display: grid; gap: 2px; line-height: 2">
+        <div style="font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: #6F7788; margin-bottom: 8px">Dans la boîte</div>
+        <div>· la veilleuse Halo</div>
+        <div>· alimentation USB-C</div>
+        <div>· câble tressé 2 m</div>
+        <div>· guide de mise en route, 1 page</div>
+        <div style="border-top: 2px solid #2A2F3B; margin-top: 8px; padding-top: 8px; color: #45E07F">aucune application à installer</div>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 24px; display: grid; gap: 10px; align-content: start">
+        <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 19px; letter-spacing: -.02em">Fabriquée en petite série</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Coques imprimées et assemblées à l'unité en France. Chaque lampe est testée une nuit entière avant d'être expédiée.</p>
+      </div>
+      <div style="background: #14161D; border: 3px solid #2A2F3B; border-radius: 26px; padding: 24px; display: grid; gap: 10px; align-content: start">
+        <strong style="font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 19px; letter-spacing: -.02em">Garantie 2 ans, mises à jour à vie</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Active les mises à jour automatiques à la configuration : le firmware se met à jour tout seul, sans rien te demander. Une pièce casse, on te la remplace.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px">
+      <div style="display: grid; gap: 8px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 24px; padding: 24px; align-content: start">
+        <strong style="font-size: 16.5px">Est-ce un dispositif médical ?</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Non. Halo est un objet lumineux de confort. Aucune décision de traitement ne doit être prise à partir de sa couleur — le lecteur et l'app officielle restent la référence.</p>
+      </div>
+      <div style="display: grid; gap: 8px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 24px; padding: 24px; align-content: start">
+        <strong style="font-size: 16.5px">Et si le WiFi tombe ?</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">La lampe passe au blanc au bout de quelques minutes sans données fraîches. Elle ne prétend jamais que tout va bien.</p>
+      </div>
+      <div style="display: grid; gap: 8px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 24px; padding: 24px; align-content: start">
+        <strong style="font-size: 16.5px">Ça marche avec quels capteurs ?</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Dexcom G6 et G7 via Share, comptes Europe et US. Un porteur, une lampe — ou plusieurs lampes pour le même porteur.</p>
+      </div>
+      <div style="display: grid; gap: 8px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 24px; padding: 24px; align-content: start">
+        <strong style="font-size: 16.5px">Je peux changer les seuils ?</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Oui, hypo / hyper / gyrophare se règlent au chiffre exact depuis la page de configuration, en mg/dL comme en mmol/L.</p>
+      </div>
+      <div style="display: grid; gap: 8px; background: #14161D; border: 3px solid #2A2F3B; border-radius: 24px; padding: 24px; align-content: start">
+        <strong style="font-size: 16.5px">Combien consomme-t-elle ?</strong>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #B9BFCC">Moins de 1 W en veille verte nocturne. Elle reste branchée en permanence, comme une veilleuse classique.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1180px; margin: 0 auto; padding: 84px 28px 0">
+    <div id="commander" style="background: radial-gradient(900px 460px at 50% 0%, rgba(69,224,127,.18), transparent 66%), #101219; border: 3px solid #2A2F3B; border-radius: 34px; padding: 60px 40px; display: grid; gap: 24px; justify-items: center; text-align: center">
+      <svg viewBox="0 0 200 190" width="150" style="display: block; overflow: visible">
+        <ellipse cx="100" cy="166" rx="60" ry="12" fill="#45E07F" opacity=".28" style="filter: blur(7px)"></ellipse>
+        <circle cx="100" cy="92" r="72" fill="#45E07F" opacity=".22" style="filter: blur(20px); animation: gGlow 4s ease-in-out infinite"></circle>
+        <path d="M44 112 V138 C44 154 62 160 100 160 C138 160 156 154 156 138 V112 Z" fill="#14151B" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="#EDE9E1" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <g clip-path="url(#gDome)"><rect x="40" y="52" width="120" height="64" fill="#45E07F" opacity=".92"></rect></g>
+        <path d="M44 112 V92 C44 56 156 56 156 92 V112 Z" fill="none" stroke="#07080B" stroke-width="5" stroke-linejoin="round"></path>
+        <ellipse cx="76" cy="80" rx="11" ry="17" fill="#FFFFFF" opacity=".38" style="filter: blur(4px)"></ellipse>
+        <path d="M46 112 H154" stroke="#07080B" stroke-width="5" stroke-linecap="round"></path>
+      </svg>
+      <h2 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: clamp(30px, 4vw, 52px); line-height: 1.02; font-weight: 700; letter-spacing: -.035em; max-width: 22ch; text-wrap: balance">Rends-lui ses nuits.</h2>
+      <p style="margin: 0; max-width: 48ch; font-size: 18px; line-height: 1.55; color: #B9BFCC; text-wrap: pretty">Première série limitée, livrée configurée. Expédition sous 15 jours.</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
+        <a href="#commander" style="min-height: 60px; display: inline-flex; align-items: center; padding: 0 28px; border-radius: 18px; background: #45E07F; color: #05240F; font-size: 17px; font-weight: 700; box-shadow: 0 16px 34px -16px rgba(69,224,127,.9)" class="hv6">Précommander Halo</a>
+        <a href="#faq" style="min-height: 60px; display: inline-flex; align-items: center; padding: 0 28px; border: 3px solid #2A2F3B; border-radius: 18px; color: #EDEAE3; font-size: 17px; font-weight: 600" class="hv7">Poser une question</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="max-width: 1180px; margin: 72px auto 0; padding: 28px 28px 64px; border-top: 2px solid #1F232D; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; font-size: 14px; color: #6F7788">
+    <span style="display: flex; align-items: center; gap: 10px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 17px; font-weight: 700; color: #B9BFCC"><span style="width: 12px; height: 12px; border-radius: 999px; background: #45E07F"></span>halo</span>
+    <span style="flex: 1"></span>
+    <span style="max-width: 62ch; line-height: 1.6">Halo n'est pas un dispositif médical et n'est affilié ni à Dexcom ni à aucun fabricant de capteurs. En cas de doute, réfère-toi toujours à ton lecteur.</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var props = window.__DC_PROPS__ || {};
+  class DCLogic {
+    constructor() { this.props = props; this.state = {}; }
+    setState(p) { Object.assign(this.state, typeof p === 'function' ? p(this.state) : p); render(); componentUpdated(); }
+  }
+class Component extends DCLogic {
+  state = { s: 'ok' };
+  chip(key, color, ink) {
+    const on = this.state.s === key;
+    return 'min-height:46px;padding:0 16px;border-radius:999px;font-family:inherit;font-size:14.5px;font-weight:' +
+      (on ? '700' : '600') + ';cursor:pointer;border:3px solid ' + (on ? color : '#2A2F3B') +
+      ';background:' + (on ? color : 'transparent') + ';color:' + (on ? ink : '#B9BFCC') + ';transition:all 160ms ease';
+  }
+  renderVals() {
+    const off = 'display:none';
+    const base = { c2: '#000', dome2: off, sweep: off, so: '0', dot: off, dotO: '0' };
+    const M = {
+      ok:      Object.assign({}, base, { c: '#45E07F', t: 'Dans la plage', m: 'vert · fixe · couronne pleine', x: "Aucun mouvement, aucune variation. C'est l'état par défaut de la nuit." }),
+      high:    Object.assign({}, base, { c: '#FFA23A', t: 'Au-dessus du seuil haut', m: 'orange · fixe · couronne pleine', x: "Même immobilité que le vert : la couleur change, le rythme non." }),
+      sev:     Object.assign({}, base, { c: '#FF6B1F', t: 'Très au-dessus du seuil haut', m: 'orange · bloc tournant · 1,6 s', x: "Un sixième de la couronne tourne. On ajoute du mouvement, pas de la lumière : la chambre ne s'éclaire pas davantage.", dome: 'opacity:.3', halo: 'filter:blur(26px);opacity:.24', sweep: 'animation:gSpin 1.6s linear infinite;transform-origin:100px 100px', so: '.95' }),
+      low:     Object.assign({}, base, { c: '#FF1F33', t: 'Sous le seuil bas', m: 'rouge · pulsation 1,2 s · 100 %', x: 'Deux fois plus rapide que tout le reste, à pleine puissance, mode nuit ignoré. Le seul état conçu pour être vu les yeux fermés.', dome: 'animation:gPulse 1.2s ease-in-out infinite', halo: 'filter:blur(24px);animation:gPulse 1.2s ease-in-out infinite' }),
+      unknown: Object.assign({}, base, { c: '#F4F1EA', t: 'Sans données', m: 'blanc · fixe · données périmées', x: "Réseau coupé ou capteur silencieux. Jamais vert : une absence ne ressemble pas à un état connu.", dome: 'opacity:.7', halo: 'filter:blur(26px);opacity:.14' }),
+      setup:   Object.assign({}, base, { c: '#B96BFF', t: 'Mode configuration', m: 'violet · respiration 3 s', x: "La lampe attend ses réglages et ouvre son propre réseau WiFi. Le violet n'est utilisé par aucun autre état.", dome: 'animation:gBreathe 3s ease-in-out infinite', halo: 'filter:blur(26px);animation:gBreathe 3s ease-in-out infinite' }),
+      reject:  Object.assign({}, base, { c: '#B96BFF', c2: '#FF1F33', t: 'Identifiants refusés', m: 'violet ⇄ rouge · 600 ms · sans fondu', x: "Le compte n'a pas été accepté : à reprendre depuis la page de configuration. Alternance dure, jamais de fondu.", dome: 'animation:gSwap .6s steps(1,end) infinite', dome2: 'animation:gSwapB .6s steps(1,end) infinite', halo: 'filter:blur(26px);animation:gSwap .6s steps(1,end) infinite' }),
+      boot:    Object.assign({}, base, { c: '#4C8CFF', t: 'Démarrage · mise à jour', m: 'bleu · point qui tourne · 2,4 s', x: "Le bleu n'apparaît qu'au démarrage et pendant une mise à jour. C'est la couleur de la machine.", dome: 'opacity:.14', halo: 'filter:blur(26px);animation:gGlow 2.4s ease-in-out infinite', dot: 'animation:gSpin 2.4s linear infinite;transform-origin:100px 100px', dotO: '1' })
+    };
+    const v = M[this.state.s] || M.ok;
+    const set = k => () => this.setState({ s: k });
+    return {
+      demoColor: v.c, demoColor2: v.c2, demoTitle: v.t, demoMeta: v.m, demoText: v.x,
+      demoDome: v.dome || 'opacity:.92', demoDome2: v.dome2,
+      demoHalo: v.halo || 'filter:blur(26px);animation:gGlow 4s ease-in-out infinite',
+      demoSweepStyle: v.sweep, demoSweepOpacity: v.so,
+      demoDotStyle: v.dot, demoDotOpacity: v.dotO,
+      pickOk: set('ok'), pickHigh: set('high'), pickSev: set('sev'), pickLow: set('low'),
+      pickUnknown: set('unknown'), pickSetup: set('setup'), pickReject: set('reject'), pickBoot: set('boot'),
+      chipOk: this.chip('ok', '#45E07F', '#05240F'),
+      chipHigh: this.chip('high', '#FFA23A', '#201203'),
+      chipSev: this.chip('sev', '#FF6B1F', '#200A02'),
+      chipLow: this.chip('low', '#FF1F33', '#14000A'),
+      chipUnknown: this.chip('unknown', '#F4F1EA', '#14161D'),
+      chipSetup: this.chip('setup', '#B96BFF', '#16021F'),
+      chipReject: this.chip('reject', '#B96BFF', '#16021F'),
+      chipBoot: this.chip('boot', '#4C8CFF', '#02132E')
+    };
+  }
+}
+  var c = new Component();
+  var handlers = {};
+  function render() {
+    var v = c.renderVals ? c.renderVals() : {};
+    document.querySelectorAll('[data-t]').forEach(function (el) {
+      var x = v[el.getAttribute('data-t')]; el.textContent = x == null ? '' : x;
+    });
+    document.querySelectorAll('[data-b]').forEach(function (el) {
+      el.getAttribute('data-b').split(';').forEach(function (b) {
+        var i = b.indexOf('='), a = b.slice(0, i), k = b.slice(i + 1), x = v[k];
+        if (a === '@click') { handlers[k] = x; if (!el.__dc) { el.__dc = 1; el.addEventListener('click', function () { handlers[k] && handlers[k](); }); } }
+        else if (x == null) el.removeAttribute(a);
+        else el.setAttribute(a, x);
+      });
+    });
+  }
+  function componentUpdated() { c.componentDidUpdate && c.componentDidUpdate(); }
+  render();
+  c.componentDidMount && c.componentDidMount();
+})();
+</script>
+</body>
+</html>
